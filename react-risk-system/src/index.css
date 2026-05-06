@@ -1,0 +1,191 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+
+:root {
+  --app-bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+  --surface-soft-2: #f3f4f6;
+  --border: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --hover-soft: #f3f4f6;
+}
+
+html {
+  color-scheme: light;
+  direction: rtl;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  direction: rtl;
+}
+
+body {
+  margin: 0;
+  font-family: 'Cairo', 'Segoe UI', 'Tahoma', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--app-bg);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  text-align: right;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Inputs / textareas / selects: default to right-aligned RTL */
+input,
+textarea,
+select {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Numeric / latin-only inputs (email, password, urls) stay LTR but
+   visually align right so they sit naturally inside RTL forms. */
+input[type='email'],
+input[type='url'],
+input[type='tel'],
+input[type='number'],
+input[type='password'],
+input[lang='en'] {
+  direction: ltr;
+  text-align: right;
+  unicode-bidi: plaintext;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --app-bg: #0b1220;
+  --surface: #111827;
+  --surface-soft: #172033;
+  --surface-soft-2: #1f2937;
+  --border: #2a364b;
+  --text-primary: #f3f4f6;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --hover-soft: #1f2937;
+}
+
+html[data-theme='dark'] body {
+  background-color: var(--app-bg) !important;
+}
+
+html[data-theme='dark'] .bg-white {
+  background-color: var(--surface) !important;
+}
+
+html[data-theme='dark'] .bg-gray-50 {
+  background-color: var(--surface-soft) !important;
+}
+
+html[data-theme='dark'] .bg-gray-100 {
+  background-color: var(--surface-soft-2) !important;
+}
+
+html[data-theme='dark'] .border-gray-100,
+html[data-theme='dark'] .border-gray-200,
+html[data-theme='dark'] .border-gray-300 {
+  border-color: var(--border) !important;
+}
+
+html[data-theme='dark'] .text-gray-900,
+html[data-theme='dark'] .text-gray-800 {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme='dark'] .text-gray-700,
+html[data-theme='dark'] .text-gray-600,
+html[data-theme='dark'] .text-gray-500,
+html[data-theme='dark'] .text-gray-400 {
+  color: var(--text-secondary) !important;
+}
+
+html[data-theme='dark'] input,
+html[data-theme='dark'] select,
+html[data-theme='dark'] textarea {
+  background-color: var(--surface-soft) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border) !important;
+}
+
+html[data-theme='dark'] input::placeholder,
+html[data-theme='dark'] textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+html[data-theme='dark'] .hover\:bg-gray-50:hover {
+  background-color: var(--hover-soft) !important;
+}
+
+html[data-theme='dark'] .hover\:bg-gray-100:hover {
+  background-color: var(--hover-soft) !important;
+}
+
+html[data-theme='dark'] .shadow-sm,
+html[data-theme='dark'] .shadow-md,
+html[data-theme='dark'] .shadow-lg,
+html[data-theme='dark'] .shadow-xl,
+html[data-theme='dark'] .shadow-2xl {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28) !important;
+}
+
+html[data-theme='dark'] table thead {
+  background-color: var(--surface-soft) !important;
+}
+
+html[data-theme='dark'] .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border) !important;
+}
+
+html[data-theme='dark'] .bg-red-50 {
+  background-color: rgba(127, 29, 29, 0.18) !important;
+}
+
+html[data-theme='dark'] .bg-blue-50 {
+  background-color: rgba(30, 64, 175, 0.16) !important;
+}
+
+html[data-theme='dark'] .bg-green-50 {
+  background-color: rgba(21, 128, 61, 0.16) !important;
+}
+
+html[data-theme='dark'] .bg-purple-50 {
+  background-color: rgba(109, 40, 217, 0.16) !important;
+}
+
+html[data-theme='dark'] .bg-cyan-50 {
+  background-color: rgba(8, 145, 178, 0.14) !important;
+}
+
+html[data-theme='dark'] .bg-yellow-50 {
+  background-color: rgba(161, 98, 7, 0.16) !important;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+html[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: #334155;
+}

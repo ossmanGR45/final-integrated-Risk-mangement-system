@@ -1,0 +1,21 @@
+# Node
+node_modules/
+react-risk-system/node_modules/
+
+# Build output
+react-risk-system/build/
+QM-master/**/bin/
+QM-master/**/obj/
+
+# IDE
+.vs/
+*.user
+*.suo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Environment
+.env
+.env.local
