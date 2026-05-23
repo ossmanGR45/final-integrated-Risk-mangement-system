@@ -77,23 +77,22 @@ namespace QM.Controller
             {
                 if (IsInitiator(userRole))
                 {
-                    // Initiator: only their own risk records.
-                    filter = filter.And(r => r.UserId == userId);
+                    // Initiator: catalog risks OR their own custom suggestions
+                    filter = filter.And(r => r.Custom == false || r.UserId == userId);
                 }
                 else if (IsManager(userRole))
                 {
-                    // Manager: own + records owned by users who report to them.
+                    // Manager: catalog risks OR own / team custom suggestions
                     filter = filter.And(r =>
+                        r.Custom == false ||
                         r.UserId == userId ||
                         (r.User != null && r.User.ManagerId == userId)
                     );
                 }
                 else
                 {
-                    // Admin: only sees risks that a manager has explicitly
-                    // redirected (ReDirected == true). Anything still pending
-                    // at the manager stage is invisible to the admin.
-                    filter = filter.And(r => r.ReDirected == true);
+                    // Admin: catalog risks OR redirected custom suggestions
+                    filter = filter.And(r => r.Custom == false || r.ReDirected == true);
                 }
             }
 
