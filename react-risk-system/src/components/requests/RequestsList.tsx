@@ -180,7 +180,7 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
     try {
       setIsLoading(true);
       const pendingFlag = mode === 'pending' ? 'true' : 'false';
-      const url = `http://localhost:7002/api/requests?pending=${pendingFlag}`;
+      const url = `https://localhost:7002/api/requests?pending=${pendingFlag}`;
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -275,7 +275,7 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
   };
 
   const saveRequestUpdate = async (body: any) => {
-    const response = await fetch(`http://localhost:7002/api/requests/addUpdate`, {
+    const response = await fetch(`https://localhost:7002/api/requests/addUpdate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -339,7 +339,7 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
         : [],
     };
 
-    const response = await fetch(`http://localhost:7002/api/requests/addUpdate`, {
+    const response = await fetch(`https://localhost:7002/api/requests/addUpdate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -167,7 +167,7 @@ const Header: React.FC = () => {
 
         // Real notification endpoint. The backend filters by the current user
         // automatically (admin gets all unless they pass userId).
-        const response = await fetch('http://localhost:7002/api/notification', {
+        const response = await fetch('https://localhost:7002/api/notification', {
           headers: {
             Authorization: `Bearer ${token}`
           }

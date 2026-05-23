@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Centralized API base URL. Change this once if the backend host changes.
-export const API_BASE = "http://localhost:7002/api";
+export const API_BASE = "https://localhost:7002/api";
 
 export const http = axios.create({
   baseURL: API_BASE,

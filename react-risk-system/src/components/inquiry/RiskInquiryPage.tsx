@@ -222,9 +222,9 @@ const RiskInquiryPage: React.FC = () => {
           : {};
 
         const [catRes, riskRes, respRes] = await Promise.all([
-          fetch('http://localhost:7002/api/category', { headers }),
-          fetch('http://localhost:7002/api/risk?custom=false&include=RiskActions.Action,RiskCauses.Cause,RiskGoals.StrategicGoal', { headers }),
-          fetch('http://localhost:7002/api/responsible', { headers })
+          fetch('https://localhost:7002/api/category', { headers }),
+          fetch('https://localhost:7002/api/risk?custom=false&include=RiskActions.Action,RiskCauses.Cause,RiskGoals.StrategicGoal', { headers }),
+          fetch('https://localhost:7002/api/responsible', { headers })
         ]);
 
         setCategories(await catRes.json());

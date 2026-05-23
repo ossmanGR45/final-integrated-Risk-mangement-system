@@ -98,7 +98,7 @@ type TabKey =
 type SectionKey = 'strategicGoals' | 'causes' | 'responseActions' | 'preventiveActions';
 
 const emptyList: string[] = [];
-const API_BASE = 'http://localhost:7002/api';
+const API_BASE = 'https://localhost:7002/api';
 
 const AddNewRisk: React.FC<AddNewRiskProps> = ({
   onCancel,

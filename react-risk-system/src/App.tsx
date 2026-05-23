@@ -167,7 +167,7 @@ const DashboardLayout = () => {
                           : [],
                       };
 
-                      const response = await fetch('http://localhost:7002/api/requests/addUpdate', {
+                      const response = await fetch('https://localhost:7002/api/requests/addUpdate', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
@@ -221,7 +221,7 @@ const DashboardLayout = () => {
                         strategicGoals: [],
                       };
 
-                      const response = await fetch('http://localhost:7002/api/risk/addUpdate', {
+                      const response = await fetch('https://localhost:7002/api/risk/addUpdate', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',

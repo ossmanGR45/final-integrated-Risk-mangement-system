@@ -12,7 +12,7 @@ import {
   RequestWorkflowStatus
 } from './data';
 
-const API_BASE = 'http://localhost:7002/api';
+const API_BASE = 'https://localhost:7002/api';
 
 const getCurrentUser = () => {
   const username = localStorage.getItem('username') || 'unknown@ju.edu.jo';

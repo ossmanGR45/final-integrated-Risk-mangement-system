@@ -49,7 +49,7 @@ type RawRisk = {
   RiskGoals?: RiskGoalMappingDto[] | null;
 };
 
-const API_BASE = 'http://localhost:7002/api';
+const API_BASE = 'https://localhost:7002/api';
 
 const toStringArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];

@@ -48,8 +48,8 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
       // Both endpoints return only items the current user is allowed to see
       // (initiator: own; manager: own + reports; admin: everything redirected).
       const [reqRes, riskRes] = await Promise.all([
-        fetch('http://localhost:7002/api/requests?pending=false', { headers }),
-        fetch('http://localhost:7002/api/risk', { headers }),
+        fetch('https://localhost:7002/api/requests?pending=false', { headers }),
+        fetch('https://localhost:7002/api/risk', { headers }),
       ]);
 
       const requests = reqRes.ok ? await reqRes.json() : [];

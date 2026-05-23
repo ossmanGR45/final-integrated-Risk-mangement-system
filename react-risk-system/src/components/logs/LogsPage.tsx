@@ -109,8 +109,8 @@ const LogsPage: React.FC<LogsPageProps> = ({ role }) => {
       const token = localStorage.getItem('authToken');
       const endpoint =
         role === 'admin'
-          ? 'http://localhost:7002/api/logs'
-          : 'http://localhost:7002/api/logs/my';
+          ? 'https://localhost:7002/api/logs'
+          : 'https://localhost:7002/api/logs/my';
 
       const response = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },

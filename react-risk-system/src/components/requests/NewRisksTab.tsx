@@ -141,7 +141,7 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
       // Show suggestion records: Custom=true regardless of role.
       // The backend already scopes by role, so a manager only sees their team's
       // and admin sees everything.
-      const endpoint = `http://localhost:7002/api/risk?custom=true`;
+      const endpoint = `https://localhost:7002/api/risk?custom=true`;
 
       const response = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
@@ -181,7 +181,7 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
     try {
       const token = localStorage.getItem('authToken');
 
-      const response = await fetch(`http://localhost:7002/api/risk/addUpdate`, {
+      const response = await fetch(`https://localhost:7002/api/risk/addUpdate`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -214,7 +214,7 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
     try {
       const token = localStorage.getItem('authToken');
 
-      const response = await fetch(`http://localhost:7002/api/risk/addUpdate`, {
+      const response = await fetch(`https://localhost:7002/api/risk/addUpdate`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
