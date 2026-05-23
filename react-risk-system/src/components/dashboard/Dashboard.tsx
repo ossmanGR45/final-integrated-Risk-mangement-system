@@ -5,6 +5,12 @@ import {
 } from 'lucide-react';
 import { calculateRiskScore, getRiskColor, getRiskLabel } from '../../utils/riskCalculations';
 import RiskDetailModal, { RiskFull, ResponsibleEntity } from '../shared/RiskDetailModal';
+import {
+  BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer,
+} from 'recharts';
 
 type RequestItem = {
   id: string;
@@ -37,6 +43,7 @@ type RawRisk = {
   categoryName?: unknown; categoryID?: unknown; responsibleId?: unknown; department?: unknown;
   strategicGoals?: unknown; riskActions?: unknown; riskCauses?: unknown; riskGoals?: unknown;
   riskactions?: unknown; riskcauses?: unknown; riskgoals?: unknown;
+  status?: unknown; Status?: unknown;
   RiskActions?: RiskActionMappingDto[] | null;
   RiskCauses?: RiskCauseMappingDto[] | null;
   RiskGoals?: RiskGoalMappingDto[] | null;
@@ -135,6 +142,8 @@ const Dashboard: React.FC = () => {
   const [showGoals, setShowGoals] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<StrategicGoalItem | null>(null);
   const [selectedRisk, setSelectedRisk] = useState<RiskFull | null>(null);
+  const [rawRisksData, setRawRisksData] = useState<RawRisk[]>([]);
+  const [heatmapHover, setHeatmapHover] = useState<[number, number, number] | null>(null);
 
   const parseJsonSafe = async (response: Response) => {
     const text = await response.text();
@@ -174,7 +183,9 @@ const Dashboard: React.FC = () => {
         })).filter(g => g.title);
 
         setRequests(mapped);
-        setRisks(Array.isArray(risksData) ? risksData.map(normalizeRisk) : []);
+        const risksArr = Array.isArray(risksData) ? risksData : [];
+        setRawRisksData(risksArr);
+        setRisks(risksArr.map(normalizeRisk));
         setResponsibleEntities(Array.isArray(respData) ? respData : []);
         setAllStrategicGoals(mappedGoals);
       } catch (error) {
@@ -258,6 +269,182 @@ const Dashboard: React.FC = () => {
   const getResponsibleEntity = useCallback((responsibleId: number) =>
     responsibleEntities.find(e => e.id === responsibleId),
   [responsibleEntities]);
+
+  // ─── Reports: Derived Chart Data ───────────────────────────────────
+
+  const CHART_COLORS = {
+    blue: '#3b82f6', green: '#22c55e', purple: '#8b5cf6', red: '#ef4444',
+    amber: '#f59e0b', teal: '#0ea5e9', indigo: '#6366f1', pink: '#ec4899',
+    cyan: '#06b6d4',
+  };
+
+  // Status labels for risk Status enum
+  const STATUS_LABELS: Record<number, string> = {
+    0: 'مرفوضة', 1: 'قيد العمل', 2: 'قيد المراجعة', 3: 'مقبولة',
+  };
+  const STATUS_COLORS: Record<number, string> = {
+    0: CHART_COLORS.red, 1: CHART_COLORS.amber, 2: CHART_COLORS.teal, 3: CHART_COLORS.green,
+  };
+
+  // 3. Risks by Status
+  const risksByStatus = useMemo(() => {
+    const counts: Record<number, number> = {};
+    rawRisksData.forEach(r => {
+      const s = Number(r.status ?? r.Status ?? 1);
+      counts[s] = (counts[s] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([key, count]) => ({
+        name: STATUS_LABELS[Number(key)] || `حالة ${key}`,
+        value: count,
+        color: STATUS_COLORS[Number(key)] || CHART_COLORS.blue,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [rawRisksData]);
+
+  // 4. Mitigation Type Split
+  const mitigationSplit = useMemo(() => {
+    let reduction = 0;
+    let avoidance = 0;
+    rawRisksData.forEach(r => {
+      const rawActions = r.riskActions ?? r.riskactions ?? r.RiskActions;
+      if (!Array.isArray(rawActions)) return;
+      rawActions.forEach((item: any) => {
+        if (!item || typeof item !== 'object') return;
+        const action = item.action ?? item.Action;
+        if (!action) return;
+        const t = action.actionType ?? action.ActionType;
+        if (t === 0 || t === '0' || t === 'Avoidance') avoidance++;
+        else reduction++;
+      });
+    });
+    return [
+      { name: 'تخفيض', value: reduction, color: CHART_COLORS.indigo },
+      { name: 'تجنب', value: avoidance, color: CHART_COLORS.pink },
+    ];
+  }, [rawRisksData]);
+
+  const mitigationTotal = mitigationSplit[0].value + mitigationSplit[1].value;
+
+  // 5. Risk Count by Category
+  const risksByCategory = useMemo(() => {
+    const counts: Record<string, number> = {};
+    risks.forEach(r => {
+      const cat = r.categoryName || 'غير مصنف';
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [risks]);
+
+  const CATEGORY_COLORS = ['#6366f1', '#8b5cf6', '#3b82f6', '#0ea5e9', '#22d3ee', '#14b8a6', '#f59e0b', '#ef4444'];
+
+  // 6. Dept Risk Profile
+  const deptProfile = useMemo(() => {
+    const deptMap: Record<string, { risks: number; incidents: number; resolved: number }> = {};
+    risks.forEach(r => {
+      const d = r.department || 'غير محدد';
+      if (!deptMap[d]) deptMap[d] = { risks: 0, incidents: 0, resolved: 0 };
+      deptMap[d].risks++;
+    });
+    requests.forEach((r: any) => {
+      const d = r.department || 'غير محدد';
+      if (!deptMap[d]) deptMap[d] = { risks: 0, incidents: 0, resolved: 0 };
+      deptMap[d].incidents++;
+      if (r.status === 'accepted') deptMap[d].resolved++;
+    });
+    return Object.entries(deptMap).map(([dept, v]) => ({ dept, ...v }));
+  }, [risks, requests]);
+
+  // 7. Trend Data (half-year)
+  const trendData = useMemo(() => {
+    const buckets: Record<string, { submitted: number; accepted: number; rejected: number }> = {};
+    requests.forEach((r: any) => {
+      const raw = r.year || r.Year || r.date;
+      if (!raw) return;
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return;
+      const half = d.getMonth() < 6 ? 'H1' : 'H2';
+      const key = `${half} ${d.getFullYear()}`;
+      if (!buckets[key]) buckets[key] = { submitted: 0, accepted: 0, rejected: 0 };
+      buckets[key].submitted++;
+      if (r.status === 'accepted') buckets[key].accepted++;
+      if (r.status === 'rejected') buckets[key].rejected++;
+    });
+    return Object.entries(buckets)
+      .sort(([a], [b]) => {
+        const [ha, ya] = a.split(' ');
+        const [hb, yb] = b.split(' ');
+        const va = Number(ya) * 2 + (ha === 'H2' ? 1 : 0);
+        const vb = Number(yb) * 2 + (hb === 'H2' ? 1 : 0);
+        return va - vb;
+      })
+      .map(([period, v]) => ({ period, ...v }));
+  }, [requests]);
+
+  // KPI delta: compare last two periods
+  const kpiDelta = useMemo(() => {
+    if (trendData.length < 2) return null;
+    const curr = trendData[trendData.length - 1].submitted;
+    const prev = trendData[trendData.length - 2].submitted;
+    if (prev === 0) return null;
+    const pct = Math.round(((curr - prev) / prev) * 100);
+    return { pct: Math.abs(pct), up: pct >= 0, prevLabel: trendData[trendData.length - 2].period };
+  }, [trendData]);
+
+  // 8. Heatmap Data
+  const heatmapGrid = useMemo(() => {
+    const grid: Record<string, number> = {};
+    risks.forEach(r => {
+      const l = r.likelihood;
+      const i = r.impact;
+      if (l >= 1 && l <= 5 && i >= 1 && i <= 5) {
+        const key = `${l}-${i}`;
+        grid[key] = (grid[key] || 0) + 1;
+      }
+    });
+    return grid;
+  }, [risks]);
+
+  const getHeatColor = (count: number) => {
+    if (!count) return '#f1f5f9';
+    if (count <= 2) return '#bfdbfe';
+    if (count <= 4) return '#3b82f6';
+    if (count <= 6) return '#f59e0b';
+    if (count <= 8) return '#ef4444';
+    return '#991b1b';
+  };
+
+  const getHeatTextColor = (count: number) => {
+    if (!count) return '#94a3b8';
+    if (count <= 2) return '#1e40af';
+    return '#ffffff';
+  };
+
+  const getHeatLabel = (l: number, i: number) => {
+    const s = l * i;
+    if (s <= 4) return { text: 'منخفض', color: '#3b82f6' };
+    if (s <= 8) return { text: 'متوسط', color: '#0ea5e9' };
+    if (s <= 12) return { text: 'مرتفع', color: '#f59e0b' };
+    if (s <= 16) return { text: 'حرج', color: '#ef4444' };
+    return { text: 'خطر شديد', color: '#991b1b' };
+  };
+
+  // Custom tooltip for recharts
+  const ChartTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="bg-white rounded-xl p-3 shadow-lg border border-gray-200" style={{ direction: 'rtl' }}>
+        {label && <div className="text-gray-500 text-xs mb-1">{label}</div>}
+        {payload.map((p: any, i: number) => (
+          <div key={i} className="text-sm font-bold" style={{ color: p.color }}>
+            {p.name}: {p.value}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   const StatCard = ({ title, value, icon, color, borderColor }: {
     title: string; value: number; icon: React.ReactNode; color: string; borderColor: string;
@@ -402,6 +589,359 @@ const Dashboard: React.FC = () => {
           <StatCard title="الطلبات المقبولة" value={stats.accepted} icon={<CheckCircle2 className="text-white" size={24} />} color="bg-green-600" borderColor="border-green-600" />
           <StatCard title="الطلبات المرفوضة" value={stats.rejected} icon={<XCircle className="text-white" size={24} />} color="bg-red-600" borderColor="border-red-600" />
         </div>
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* ██  REPORTS & ANALYTICS SECTION                             ██ */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+
+        {/* 1. Section Header */}
+        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mt-4">
+          <div className="flex items-center gap-4">
+            <div className="w-1.5 h-12 rounded-full" style={{ background: 'linear-gradient(180deg, #0ea5e9, #3b82f6)' }} />
+            <div>
+              <div className="text-xs font-bold tracking-widest text-cyan-600 uppercase" style={{ fontFamily: 'monospace' }}>Analytics</div>
+              <h2 className="text-3xl font-black text-gray-900">التقارير والإحصائيات</h2>
+            </div>
+            {trendData.length > 0 && (
+              <div className="mr-auto">
+                <div className="px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-xs font-bold text-cyan-700" style={{ fontFamily: 'monospace' }}>
+                  ● {trendData[trendData.length - 1].period}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 2. KPI Cards Row (reusing same stat data + delta on total) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {/* إجمالي الطلبات — with delta */}
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 border-r-[6px] border-blue-600 hover:shadow-md transition-all">
+            <div className="flex items-start justify-between">
+              <div className="bg-blue-600 p-3 rounded-2xl shadow-sm"><FileText className="text-white" size={24} /></div>
+              <div className="text-right">
+                <p className="text-gray-500 text-sm mb-2 font-medium">إجمالي الطلبات</p>
+                <p className="text-4xl font-black text-gray-900">{stats.total}</p>
+                {kpiDelta && (
+                  <p className={`text-xs mt-2 font-bold ${kpiDelta.up ? 'text-green-600' : 'text-red-600'}`} style={{ fontFamily: 'monospace' }}>
+                    {kpiDelta.up ? '▲' : '▼'} {kpiDelta.pct}% مقارنة بـ {kpiDelta.prevLabel}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+          <StatCard title="قيد العمل" value={stats.inProgress} icon={<Clock3 className="text-white" size={24} />} color="bg-purple-600" borderColor="border-purple-600" />
+          <StatCard title="الطلبات المقبولة" value={stats.accepted} icon={<CheckCircle2 className="text-white" size={24} />} color="bg-green-600" borderColor="border-green-600" />
+          <StatCard title="الطلبات المرفوضة" value={stats.rejected} icon={<XCircle className="text-white" size={24} />} color="bg-red-600" borderColor="border-red-600" />
+        </div>
+
+        {/* 3 & 4. Status Bar Chart + Mitigation Donut */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 3. Risks by Status */}
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+            <h3 className="text-xl font-bold text-right mb-1">المخاطر حسب الحالة</h3>
+            <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Risks by Status</p>
+            {risksByStatus.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">لا توجد بيانات</div>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={risksByStatus} barSize={36}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f3f4f620' }} />
+                    <Bar dataKey="value" name="العدد" radius={[8, 8, 0, 0]}>
+                      {risksByStatus.map((s, i) => <Cell key={i} fill={s.color} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="flex gap-2 flex-wrap mt-4 justify-end">
+                  {risksByStatus.map(s => (
+                    <div key={s.name} className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold" style={{ background: `${s.color}15`, border: `1px solid ${s.color}44`, color: s.color }}>
+                      <span className="w-2 h-2 rounded-full inline-block" style={{ background: s.color }} />
+                      {s.name}: <strong style={{ fontFamily: 'monospace' }}>{s.value}</strong>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* 4. Mitigation Type Split */}
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+            <h3 className="text-xl font-bold text-right mb-1">أنواع الإجراءات التخفيفية</h3>
+            <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Mitigation Type Split</p>
+            {mitigationTotal === 0 ? (
+              <div className="text-center py-12 text-gray-400">لا توجد بيانات</div>
+            ) : (
+              <div className="flex items-center justify-center gap-8" style={{ height: 220 }}>
+                <ResponsiveContainer width="55%" height={200}>
+                  <PieChart>
+                    <Pie data={mitigationSplit} cx="50%" cy="50%" innerRadius={58} outerRadius={85} paddingAngle={5} dataKey="value" startAngle={90} endAngle={-270}>
+                      {mitigationSplit.map((m, i) => <Cell key={i} fill={m.color} />)}
+                    </Pie>
+                    <Tooltip content={<ChartTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex flex-col gap-5">
+                  {mitigationSplit.map(m => (
+                    <div key={m.name} className="text-right">
+                      <div className="flex items-center gap-2 justify-end">
+                        <span className="text-sm text-gray-500">{m.name}</span>
+                        <div className="w-3 h-3 rounded" style={{ background: m.color }} />
+                      </div>
+                      <div className="text-3xl font-black text-right" style={{ color: m.color, fontFamily: 'monospace' }}>{m.value}</div>
+                      <div className="text-xs text-gray-400" style={{ fontFamily: 'monospace' }}>
+                        {mitigationTotal > 0 ? Math.round((m.value / mitigationTotal) * 100) : 0}%
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 5 & 6. Category Bars + Dept Radar */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* 5. Risk Count by Category */}
+          <div className="lg:col-span-3 bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+            <h3 className="text-xl font-bold text-right mb-1">المخاطر حسب الفئة</h3>
+            <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Risk Count by Category</p>
+            {risksByCategory.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">لا توجد بيانات</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={Math.max(200, risksByCategory.length * 46)}>
+                <BarChart data={risksByCategory} layout="vertical" barSize={22} margin={{ right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                  <XAxis type="number" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" width={130} tick={{ fill: '#4b5563', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f3f4f610' }} />
+                  <Bar dataKey="count" name="عدد المخاطر" radius={[0, 8, 8, 0]}>
+                    {risksByCategory.map((_, i) => <Cell key={i} fill={CATEGORY_COLORS[i % CATEGORY_COLORS.length]} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* 6. Dept Risk Profile */}
+          <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+            <h3 className="text-xl font-bold text-right mb-1">ملف الأقسام</h3>
+            <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Dept Risk Profile</p>
+            {deptProfile.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">لا توجد بيانات</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <RadarChart data={deptProfile} cx="50%" cy="50%" outerRadius={80}>
+                  <PolarGrid stroke="#e5e7eb" />
+                  <PolarAngleAxis dataKey="dept" tick={{ fill: '#6b7280', fontSize: 10 }} />
+                  <PolarRadiusAxis tick={false} axisLine={false} />
+                  <Radar name="مخاطر" dataKey="risks" stroke={CHART_COLORS.indigo} fill={CHART_COLORS.indigo} fillOpacity={0.2} strokeWidth={1.5} />
+                  <Radar name="حوادث" dataKey="incidents" stroke={CHART_COLORS.pink} fill={CHART_COLORS.pink} fillOpacity={0.15} strokeWidth={1.5} />
+                  <Radar name="محلولة" dataKey="resolved" stroke={CHART_COLORS.green} fill={CHART_COLORS.green} fillOpacity={0.15} strokeWidth={1.5} />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                  <Tooltip content={<ChartTooltip />} />
+                </RadarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* 7. Risk Submission Trend */}
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-xl font-bold text-right mb-1">اتجاه تقديم المخاطر (كل نصف سنة)</h3>
+          <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Risk Submission Trend — Semi-Annual</p>
+          {trendData.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">لا توجد بيانات كافية</div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={trendData} margin={{ right: 10 }}>
+                  <defs>
+                    <linearGradient id="gradSubmitted" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={CHART_COLORS.indigo} stopOpacity={0.4} />
+                      <stop offset="95%" stopColor={CHART_COLORS.indigo} stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="gradAccepted" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={CHART_COLORS.green} stopOpacity={0.4} />
+                      <stop offset="95%" stopColor={CHART_COLORS.green} stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="gradRejected" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={CHART_COLORS.red} stopOpacity={0.35} />
+                      <stop offset="95%" stopColor={CHART_COLORS.red} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="period" tick={{ fill: '#6b7280', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                  <Area type="monotone" dataKey="submitted" name="مُقدَّمة" stroke={CHART_COLORS.indigo} fill="url(#gradSubmitted)" strokeWidth={2.5} dot={{ r: 5, fill: CHART_COLORS.indigo }} activeDot={{ r: 7 }} />
+                  <Area type="monotone" dataKey="accepted" name="مقبولة" stroke={CHART_COLORS.green} fill="url(#gradAccepted)" strokeWidth={2.5} dot={{ r: 5, fill: CHART_COLORS.green }} activeDot={{ r: 7 }} />
+                  <Area type="monotone" dataKey="rejected" name="مرفوضة" stroke={CHART_COLORS.red} fill="url(#gradRejected)" strokeWidth={2.5} dot={{ r: 5, fill: CHART_COLORS.red }} activeDot={{ r: 7 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+
+              {/* Period detail cards */}
+              <div className="flex gap-3 mt-5 overflow-x-auto pb-2">
+                {trendData.map((d, idx) => {
+                  const rate = d.submitted > 0 ? Math.round((d.accepted / d.submitted) * 100) : 0;
+                  const isLatest = idx === trendData.length - 1;
+                  const prevD = idx > 0 ? trendData[idx - 1] : null;
+                  const diff = prevD ? d.submitted - prevD.submitted : null;
+                  return (
+                    <div key={d.period} className={`min-w-[160px] flex-shrink-0 p-4 rounded-2xl border transition-all ${
+                      isLatest ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'
+                    }`}>
+                      <div className={`text-xs font-bold mb-2 ${isLatest ? 'text-cyan-700' : 'text-gray-500'}`} style={{ fontFamily: 'monospace' }}>{d.period}</div>
+                      <div className="flex justify-between mb-2">
+                        <div>
+                          <div className="text-[10px] text-gray-400">مُقدَّمة</div>
+                          <div className="text-xl font-black" style={{ color: CHART_COLORS.indigo, fontFamily: 'monospace' }}>{d.submitted}</div>
+                        </div>
+                        <div className="text-left">
+                          <div className="text-[10px] text-gray-400">مقبولة</div>
+                          <div className="text-xl font-black" style={{ color: CHART_COLORS.green, fontFamily: 'monospace' }}>{d.accepted}</div>
+                        </div>
+                      </div>
+                      {/* Approval rate bar */}
+                      <div className="mb-2">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-[10px] text-gray-400">نسبة القبول</span>
+                          <span className="text-[10px] font-bold" style={{ color: CHART_COLORS.green, fontFamily: 'monospace' }}>{rate}%</span>
+                        </div>
+                        <div className="h-1 rounded-full bg-gray-200">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${rate}%`, background: `hsl(${rate * 1.2}, 65%, 48%)` }} />
+                        </div>
+                      </div>
+                      <div className="text-[10px] text-red-500" style={{ fontFamily: 'monospace' }}>✕ {d.rejected} مرفوضة</div>
+                      {diff !== null && (
+                        <div className={`mt-1.5 text-[10px] ${diff >= 0 ? 'text-cyan-600' : 'text-red-500'}`} style={{ fontFamily: 'monospace' }}>
+                          {diff >= 0 ? '▲' : '▼'} {Math.abs(diff)} عن الفترة السابقة
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 8. Risk Likelihood × Impact Matrix */}
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-xl font-bold text-right mb-1">مصفوفة الاحتمالية × التأثير</h3>
+          <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Risk Likelihood × Impact Matrix</p>
+          <div className="flex gap-8 flex-wrap">
+            {/* Grid */}
+            <div className="flex gap-3 items-end">
+              {/* Y label */}
+              <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[10px] text-gray-400 pb-7 tracking-wider">الاحتمالية</div>
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 52px)', gap: 4 }}>
+                  {[5, 4, 3, 2, 1].map(l =>
+                    [1, 2, 3, 4, 5].map(imp => {
+                      const count = heatmapGrid[`${l}-${imp}`] || 0;
+                      const isHov = heatmapHover?.[0] === l && heatmapHover?.[1] === imp;
+                      const lbl = getHeatLabel(l, imp);
+                      return (
+                        <div
+                          key={`${l}-${imp}`}
+                          onMouseEnter={() => setHeatmapHover([l, imp, count])}
+                          onMouseLeave={() => setHeatmapHover(null)}
+                          className="flex flex-col items-center justify-center cursor-pointer transition-all"
+                          style={{
+                            width: 52, height: 52, borderRadius: 10,
+                            background: getHeatColor(count),
+                            border: isHov ? `2px solid ${lbl.color}` : '2px solid transparent',
+                            transform: isHov ? 'scale(1.12)' : 'scale(1)',
+                            zIndex: isHov ? 5 : 1,
+                            position: 'relative',
+                          }}
+                        >
+                          <span className="text-base font-black" style={{ color: getHeatTextColor(count), fontFamily: 'monospace' }}>
+                            {count || '·'}
+                          </span>
+                          {count > 0 && (
+                            <span className="text-[8px]" style={{ color: getHeatTextColor(count) + '88', fontFamily: 'monospace' }}>{l}×{imp}</span>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                {/* X axis numbers */}
+                <div className="flex gap-1 mt-1.5">
+                  {[1, 2, 3, 4, 5].map(v => (
+                    <div key={v} className="text-center text-[10px] text-gray-400" style={{ width: 52, fontFamily: 'monospace' }}>{v}</div>
+                  ))}
+                </div>
+                <div className="text-center text-[10px] text-gray-400 mt-1 tracking-wider">التأثير ←</div>
+              </div>
+            </div>
+
+            {/* Right side: hover detail + legend */}
+            <div className="flex-1 min-w-[220px] flex flex-col justify-between">
+              {/* Hover info */}
+              <div className={`p-4 rounded-2xl border transition-all min-h-[90px] ${heatmapHover ? 'bg-blue-50 border-blue-200' : 'bg-transparent border-transparent'}`}>
+                {heatmapHover ? (() => {
+                  const lbl = getHeatLabel(heatmapHover[0], heatmapHover[1]);
+                  const score = heatmapHover[0] * heatmapHover[1];
+                  return (
+                    <>
+                      <div className="text-xs text-gray-500 mb-2" style={{ fontFamily: 'monospace' }}>
+                        احتمالية {heatmapHover[0]} × تأثير {heatmapHover[1]}
+                      </div>
+                      <div className="flex gap-5 items-center">
+                        <div>
+                          <div className="text-[10px] text-gray-400">الدرجة</div>
+                          <div className="text-3xl font-black" style={{ color: lbl.color, fontFamily: 'monospace' }}>{score}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-gray-400">عدد المخاطر</div>
+                          <div className="text-3xl font-black text-gray-900" style={{ fontFamily: 'monospace' }}>{heatmapHover[2]}</div>
+                        </div>
+                        <div className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: `${lbl.color}22`, border: `1px solid ${lbl.color}55`, color: lbl.color }}>
+                          {lbl.text}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })() : (
+                  <div className="text-gray-400 text-sm pt-3">مرِّر مؤشر الماوس على أي خلية لعرض التفاصيل</div>
+                )}
+              </div>
+
+              {/* Legend */}
+              <div className="mt-4">
+                <div className="text-xs text-gray-500 mb-3">مستويات الخطورة</div>
+                <div className="flex flex-col gap-2">
+                  {[
+                    { range: '1 – 4', label: 'منخفض', color: '#3b82f6' },
+                    { range: '5 – 8', label: 'متوسط', color: '#0ea5e9' },
+                    { range: '9 – 12', label: 'مرتفع', color: '#f59e0b' },
+                    { range: '13 – 16', label: 'حرج', color: '#ef4444' },
+                    { range: '17 – 25', label: 'خطر شديد', color: '#991b1b' },
+                  ].map(r => (
+                    <div key={r.range} className="flex items-center gap-2">
+                      <div className="w-8 h-4 rounded flex-shrink-0" style={{ background: r.color }} />
+                      <span className="text-xs text-gray-400" style={{ fontFamily: 'monospace' }}>{r.range}</span>
+                      <span className="text-xs font-bold" style={{ color: r.color }}>— {r.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Reports Footer */}
+        <div className="border-t border-gray-200 pt-4 mt-2 flex justify-between text-xs text-gray-400" style={{ fontFamily: 'monospace' }}>
+          <span>Risk Management & Incident Tracking System</span>
+          <span>Generated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+        </div>
+
       </div>
 
       {/* Goal Risks Modal */}

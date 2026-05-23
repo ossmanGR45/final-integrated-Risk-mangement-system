@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36623.8
+# SQL Server Management Studio Version 22
+VisualStudioVersion = 18.5.11723.231 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QM.DataAccess", "QM.DataAccess\QM.DataAccess.csproj", "{7E9E9C09-27DF-49CE-AFC9-DCB96E64654B}"
 EndProject
