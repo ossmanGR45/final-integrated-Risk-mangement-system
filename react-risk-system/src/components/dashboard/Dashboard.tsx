@@ -221,7 +221,7 @@ const Dashboard: React.FC = () => {
 
   const strategicGoals = useMemo(() => {
     const goalsMap = new Map<string, { id: number, title: string, count: number }>();
-    
+
     // Initialize map with all known strategic goals
     allStrategicGoals.forEach(g => {
       goalsMap.set(g.title.trim(), { id: g.id, title: g.title.trim(), count: 0 });
@@ -229,15 +229,15 @@ const Dashboard: React.FC = () => {
 
     // Count risks for each goal
     risks.forEach(risk => {
-        const goals = Array.isArray(risk.strategicGoals) ? risk.strategicGoals : [];
-        const riskGoals = Array.isArray(risk.riskGoals) ? risk.riskGoals : [];
-        
-        const allAssociatedGoals = Array.from(new Set([...goals, ...riskGoals]));
-        
-        allAssociatedGoals.forEach(goal => {
+      const goals = Array.isArray(risk.strategicGoals) ? risk.strategicGoals : [];
+      const riskGoals = Array.isArray(risk.riskGoals) ? risk.riskGoals : [];
+
+      const allAssociatedGoals = Array.from(new Set([...goals, ...riskGoals]));
+
+      allAssociatedGoals.forEach(goal => {
         const clean = goal.trim();
         if (!clean) return;
-        
+
         if (goalsMap.has(clean)) {
           const entry = goalsMap.get(clean)!;
           entry.count += 1;
@@ -268,7 +268,7 @@ const Dashboard: React.FC = () => {
 
   const getResponsibleEntity = useCallback((responsibleId: number) =>
     responsibleEntities.find(e => e.id === responsibleId),
-  [responsibleEntities]);
+    [responsibleEntities]);
 
   // ─── Reports: Derived Chart Data ───────────────────────────────────
 
@@ -383,15 +383,95 @@ const Dashboard: React.FC = () => {
       .map(([period, v]) => ({ period, ...v }));
   }, [requests]);
 
-  // KPI delta: compare last two periods
+  // Helper to format English half-year period to Arabic
+  const formatPeriodLabel = (period: string) => {
+    const [half, year] = period.split(' ');
+    const halfLabel = half === 'H1' ? 'النصف الأول' : 'النصف الثاني';
+    return `${halfLabel} من ${year}`;
+  };
+
+  // KPI delta: compare current half-year to previous half-year (or 6 months ago/year ago)
   const kpiDelta = useMemo(() => {
-    if (trendData.length < 2) return null;
-    const curr = trendData[trendData.length - 1].submitted;
-    const prev = trendData[trendData.length - 2].submitted;
-    if (prev === 0) return null;
-    const pct = Math.round(((curr - prev) / prev) * 100);
-    return { pct: Math.abs(pct), up: pct >= 0, prevLabel: trendData[trendData.length - 2].period };
-  }, [trendData]);
+    if (requests.length === 0) return null;
+
+    // Find the latest period in the requests
+    let latestYear = 0;
+    let latestHalf = 'H1';
+
+    requests.forEach((r: any) => {
+      const raw = r.year || r.Year || r.date;
+      if (!raw) return;
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return;
+      const y = d.getFullYear();
+      const h = d.getMonth() < 6 ? 'H1' : 'H2';
+
+      if (y > latestYear) {
+        latestYear = y;
+        latestHalf = h;
+      } else if (y === latestYear) {
+        if (h === 'H2' && latestHalf === 'H1') {
+          latestHalf = 'H2';
+        }
+      }
+    });
+
+    if (latestYear === 0) return null;
+
+    const currentPeriod = `${latestHalf} ${latestYear}`;
+
+    // Previous period is 6 months ago (the half-year before latest)
+    let prevHalf = '';
+    let prevYear: number;
+    if (latestHalf === 'H2') {
+      prevHalf = 'H1';
+      prevYear = latestYear;
+    } else {
+      prevHalf = 'H2';
+      prevYear = latestYear - 1;
+    }
+    const prevPeriod = `${prevHalf} ${prevYear}`;
+
+    // Count requests in current and previous periods
+    let currCount = 0;
+    let prevCount = 0;
+
+    requests.forEach((r: any) => {
+      const raw = r.year || r.Year || r.date;
+      if (!raw) return;
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return;
+      const y = d.getFullYear();
+      const h = d.getMonth() < 6 ? 'H1' : 'H2';
+      const periodKey = `${h} ${y}`;
+
+      if (periodKey === currentPeriod) {
+        currCount++;
+      } else if (periodKey === prevPeriod) {
+        prevCount++;
+      }
+    });
+
+    // Calculate percentage change
+    let pct = 0;
+    let up = true;
+    if (prevCount === 0) {
+      pct = currCount > 0 ? 100 : 0;
+      up = true;
+    } else {
+      const diff = currCount - prevCount;
+      pct = Math.round((diff / prevCount) * 100);
+      up = pct >= 0;
+      pct = Math.abs(pct);
+    }
+
+    return {
+      pct,
+      up,
+      prevLabel: prevPeriod,
+      currLabel: currentPeriod
+    };
+  }, [requests]);
 
   // 8. Heatmap Data
   const heatmapGrid = useMemo(() => {
@@ -451,11 +531,11 @@ const Dashboard: React.FC = () => {
   }) => (
     <div className={`bg-white rounded-3xl p-6 shadow-sm border border-gray-100 border-r-[6px] ${borderColor} hover:shadow-md transition-all`}>
       <div className="flex items-start justify-between">
-        <div className={`${color} p-3 rounded-2xl shadow-sm`}>{icon}</div>
         <div className="text-right">
-          <p className="text-gray-500 text-sm mb-2 font-medium">{title}</p>
           <p className="text-4xl font-black text-gray-900">{value}</p>
+          <p className="text-gray-500 text-sm mb-1 font-medium">{title}</p>
         </div>
+        <div className={`${color} p-3 rounded-2xl shadow-sm shrink-0`}>{icon}</div>
       </div>
     </div>
   );
@@ -582,13 +662,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Stat Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          <StatCard title="إجمالي الطلبات" value={stats.total} icon={<FileText className="text-white" size={24} />} color="bg-blue-600" borderColor="border-blue-600" />
-          <StatCard title="قيد العمل" value={stats.inProgress} icon={<Clock3 className="text-white" size={24} />} color="bg-purple-600" borderColor="border-purple-600" />
-          <StatCard title="الطلبات المقبولة" value={stats.accepted} icon={<CheckCircle2 className="text-white" size={24} />} color="bg-green-600" borderColor="border-green-600" />
-          <StatCard title="الطلبات المرفوضة" value={stats.rejected} icon={<XCircle className="text-white" size={24} />} color="bg-red-600" borderColor="border-red-600" />
-        </div>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/* ██  REPORTS & ANALYTICS SECTION                             ██ */}
@@ -617,15 +690,18 @@ const Dashboard: React.FC = () => {
           {/* إجمالي الطلبات — with delta */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 border-r-[6px] border-blue-600 hover:shadow-md transition-all">
             <div className="flex items-start justify-between">
-              <div className="bg-blue-600 p-3 rounded-2xl shadow-sm"><FileText className="text-white" size={24} /></div>
               <div className="text-right">
-                <p className="text-gray-500 text-sm mb-2 font-medium">إجمالي الطلبات</p>
                 <p className="text-4xl font-black text-gray-900">{stats.total}</p>
+                <p className="text-gray-500 text-sm mb-1 font-medium">إجمالي الطلبات</p>
                 {kpiDelta && (
-                  <p className={`text-xs mt-2 font-bold ${kpiDelta.up ? 'text-green-600' : 'text-red-600'}`} style={{ fontFamily: 'monospace' }}>
-                    {kpiDelta.up ? '▲' : '▼'} {kpiDelta.pct}% مقارنة بـ {kpiDelta.prevLabel}
+                  <p className={`text-xs mt-2 font-bold ${kpiDelta.up ? 'text-green-500' : 'text-red-500'}`}>
+                    <span className="ml-1">{kpiDelta.up ? '▲' : '▼'}</span>
+                    {kpiDelta.pct}% مقارنة {formatPeriodLabel(kpiDelta.prevLabel)}
                   </p>
                 )}
+              </div>
+              <div className="bg-blue-600 p-3 rounded-2xl shadow-sm shrink-0">
+                <FileText className="text-white" size={24} />
               </div>
             </div>
           </div>
@@ -791,9 +867,8 @@ const Dashboard: React.FC = () => {
                   const prevD = idx > 0 ? trendData[idx - 1] : null;
                   const diff = prevD ? d.submitted - prevD.submitted : null;
                   return (
-                    <div key={d.period} className={`min-w-[160px] flex-shrink-0 p-4 rounded-2xl border transition-all ${
-                      isLatest ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'
-                    }`}>
+                    <div key={d.period} className={`min-w-[160px] flex-shrink-0 p-4 rounded-2xl border transition-all ${isLatest ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'
+                      }`}>
                       <div className={`text-xs font-bold mb-2 ${isLatest ? 'text-cyan-700' : 'text-gray-500'}`} style={{ fontFamily: 'monospace' }}>{d.period}</div>
                       <div className="flex justify-between mb-2">
                         <div>
