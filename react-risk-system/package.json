@@ -46,6 +46,7 @@
     ]
   },
   "devDependencies": {
+    "@types/d3-array": "^3.2.2",
     "autoprefixer": "^10.4.23",
     "msw": "^2.12.10",
     "postcss": "^8.5.6",
