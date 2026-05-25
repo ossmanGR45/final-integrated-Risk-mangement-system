@@ -15,7 +15,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Forms & Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -89,8 +89,8 @@ export default function UsersPage() {
 
   // Available Managers list (Users who have Admin or Manager roles)
   const availableManagers = useMemo(() => {
-    return users.filter(user => 
-      user.roles.some(role => 
+    return users.filter(user =>
+      user.roles.some(role =>
         role.toLowerCase() === 'admin' || role.toLowerCase() === 'manager'
       )
     );
@@ -243,10 +243,9 @@ export default function UsersPage() {
     <div className="space-y-6">
       {/* Toast Notification */}
       {notification && (
-        <div 
-          className={`fixed bottom-5 left-5 z-[200] px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 text-white border transition-all transform translate-y-0 ${
-            notification.type === 'success' ? 'bg-green-600 border-green-700' : 'bg-red-600 border-red-700'
-          }`}
+        <div
+          className={`fixed bottom-5 left-5 z-[200] px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 text-white border transition-all transform translate-y-0 ${notification.type === 'success' ? 'bg-green-600 border-green-700' : 'bg-red-600 border-red-700'
+            }`}
         >
           {notification.type === 'success' ? <Check size={20} /> : <X size={20} />}
           <span className="font-bold">{notification.message}</span>
@@ -315,13 +314,12 @@ export default function UsersPage() {
                     <td className="px-6 py-4 text-right text-gray-900 font-bold">{user.userName}</td>
                     <td className="px-6 py-4 text-right text-gray-700">{user.email}</td>
                     <td className="px-6 py-4 text-right">
-                      <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold ${
-                        user.roles[0]?.toLowerCase() === 'admin' 
-                          ? 'bg-red-50 text-red-700 border border-red-100' 
+                      <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold ${user.roles[0]?.toLowerCase() === 'admin'
+                          ? 'bg-red-50 text-red-700 border border-red-100'
                           : user.roles[0]?.toLowerCase() === 'manager'
                             ? 'bg-purple-50 text-purple-700 border border-purple-100'
                             : 'bg-blue-50 text-[#105a9e] border border-blue-100'
-                      }`}>
+                        }`}>
                         <Shield size={12} />
                         {getRoleLabel(user.roles)}
                       </span>
@@ -377,9 +375,9 @@ export default function UsersPage() {
                 <span>إضافة مستخدم جديد</span>
                 <UserPlus size={20} className="text-[#105a9e]" />
               </h3>
-              <button 
-                type="button" 
-                onClick={() => setIsAddModalOpen(false)} 
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
                 className="w-10 h-10 rounded-xl border border-gray-200 hover:bg-slate-50 flex items-center justify-center text-gray-500 transition-colors"
               >
                 <X size={20} />
@@ -512,12 +510,12 @@ export default function UsersPage() {
                 <span>تعديل الصلاحيات: {selectedUser.userName}</span>
                 <Edit2 size={18} className="text-[#105a9e]" />
               </h3>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => {
                   setIsEditModalOpen(false);
                   setSelectedUser(null);
-                }} 
+                }}
                 className="w-10 h-10 rounded-xl border border-gray-200 hover:bg-slate-50 flex items-center justify-center text-gray-500 transition-colors"
               >
                 <X size={20} />
