@@ -571,8 +571,8 @@ const Dashboard: React.FC = () => {
               className="w-full rounded-[24px] bg-gradient-to-r from-slate-900 via-blue-900 to-cyan-700 text-white px-6 py-6 hover:opacity-95 transition-all"
             >
               <div className="flex items-center justify-between gap-4">
-                <div className={`flex items-center gap-3 transition-transform ${showGoals ? 'rotate-180' : ''}`}>
-                  <ChevronDown size={26} />
+                <div className="hidden md:flex w-16 h-16 rounded-2xl bg-white/10 items-center justify-center shrink-0">
+                  <Target size={30} />
                 </div>
                 <div className="flex-1 text-right">
                   <div className="flex items-center justify-end gap-3 mb-2">
@@ -582,8 +582,8 @@ const Dashboard: React.FC = () => {
                   <h2 className="text-2xl md:text-3xl font-black">الغايات الإستراتيجية</h2>
                   <p className="text-blue-100 mt-2 text-sm md:text-base">كبسة واحدة تعرض كل الغايات الإستراتيجية المرتبطة بالمخاطر المسجلة</p>
                 </div>
-                <div className="hidden md:flex w-16 h-16 rounded-2xl bg-white/10 items-center justify-center shrink-0">
-                  <Target size={30} />
+                <div className={`flex items-center gap-3 transition-transform ${showGoals ? 'rotate-180' : ''}`}>
+                  <ChevronDown size={26} />
                 </div>
               </div>
             </button>
@@ -599,12 +599,12 @@ const Dashboard: React.FC = () => {
                 ) : (
                   <>
                     <div className="flex items-center justify-between mb-6">
-                      <div className="hidden md:flex items-center gap-2">
-                        <span className="px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-bold">اكبس على أي غاية لعرض الأخطار المرتبطة بها</span>
-                      </div>
                       <div className="text-right">
                         <h3 className="text-2xl font-black text-gray-900">جميع الغايات الإستراتيجية</h3>
                         <p className="text-gray-500 mt-1">مرتبة بشكل جميل وواضح لسهولة الاستعراض</p>
+                      </div>
+                      <div className="hidden md:flex items-center gap-2">
+                        <span className="px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-bold">اكبس على أي غاية لعرض الأخطار المرتبطة بها</span>
                       </div>
                     </div>
 
@@ -650,14 +650,14 @@ const Dashboard: React.FC = () => {
         {/* Stats Header */}
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+            <div className="text-right">
+              <p className="text-gray-500 mb-2">عرض مرتب وسريع لأهم مؤشرات النظام</p>
+              <h1 className="text-4xl font-black text-gray-900">لوحة المعلومات</h1>
+            </div>
             <div className="flex flex-wrap gap-3">
               <div className="px-4 py-2 rounded-2xl bg-blue-50 text-blue-700 font-bold">الطلبات: {stats.total}</div>
               <div className="px-4 py-2 rounded-2xl bg-cyan-50 text-cyan-700 font-bold">الغايات: {totalStrategicGoals}</div>
               <div className="px-4 py-2 rounded-2xl bg-purple-50 text-purple-700 font-bold">المخاطر: {risks.length}</div>
-            </div>
-            <div className="text-right">
-              <p className="text-gray-500 mb-2">عرض مرتب وسريع لأهم مؤشرات النظام</p>
-              <h1 className="text-4xl font-black text-gray-900">لوحة المعلومات</h1>
             </div>
           </div>
         </div>
@@ -1024,9 +1024,6 @@ const Dashboard: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-6xl rounded-3xl shadow-2xl max-h-[90vh] overflow-hidden">
             <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-5 flex items-center justify-between">
-              <button type="button" onClick={() => setSelectedGoal(null)} className="w-11 h-11 rounded-2xl border border-gray-200 hover:bg-gray-50 flex items-center justify-center">
-                <X size={22} />
-              </button>
               <div className="text-right">
                 <div className="flex items-center justify-end gap-2 mb-1">
                   <span className="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full font-bold">{selectedGoalRisks.length} خطر</span>
@@ -1035,6 +1032,9 @@ const Dashboard: React.FC = () => {
                 <h3 className="text-2xl font-black text-gray-900">{selectedGoal.title}</h3>
                 <p className="text-gray-500 mt-1">اضغط على أي خطر لعرض تفاصيله الكاملة</p>
               </div>
+              <button type="button" onClick={() => setSelectedGoal(null)} className="w-11 h-11 rounded-2xl border border-gray-200 hover:bg-gray-50 flex items-center justify-center">
+                <X size={22} />
+              </button>
             </div>
 
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-96px)] bg-gray-50">

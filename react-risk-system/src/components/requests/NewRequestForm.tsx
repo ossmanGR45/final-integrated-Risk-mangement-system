@@ -552,18 +552,18 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
           onClick={() => toggleSection(key)}
           className="w-full px-5 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors"
         >
-          <div className="flex items-center gap-3 text-gray-500">
-            {isOpen ? <ChevronDown size={22} /> : <ChevronLeft size={22} />}
-            <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
-              {itemsCount} عنصر
-            </span>
-          </div>
-
           <div className="flex items-center gap-3 text-right">
+            <div className="text-gray-600">{icon}</div>
             <div className="text-right">
               <h4 className="text-xl font-bold text-gray-800">{title}</h4>
             </div>
-            <div className="text-gray-600">{icon}</div>
+          </div>
+
+          <div className="flex items-center gap-3 text-gray-500">
+            <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
+              {itemsCount} عنصر
+            </span>
+            {isOpen ? <ChevronDown size={22} /> : <ChevronLeft size={22} />}
           </div>
         </button>
 
@@ -804,15 +804,15 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
               onClick={() => toggleSection('strategicGoals')}
               className="w-full px-5 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors"
             >
+              <div className="flex items-center gap-3 text-right">
+                <Target size={20} className="text-blue-600" />
+                <h4 className="text-xl font-bold text-gray-800">الغاية الاستراتيجية التي يؤثر بها الخطر</h4>
+              </div>
               <div className="flex items-center gap-3 text-gray-500">
-                {expandedSections.strategicGoals ? <ChevronDown size={22} /> : <ChevronLeft size={22} />}
                 <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
                   {selectedRiskStrategicGoals.length} عنصر
                 </span>
-              </div>
-              <div className="flex items-center gap-3 text-right">
-                <h4 className="text-xl font-bold text-gray-800">الغاية الاستراتيجية التي يؤثر بها الخطر</h4>
-                <Target size={20} className="text-blue-600" />
+                {expandedSections.strategicGoals ? <ChevronDown size={22} /> : <ChevronLeft size={22} />}
               </div>
             </button>
 

@@ -450,13 +450,16 @@ const RiskInquiryPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <select
-              value={riskTypeFilter}
-              onChange={(e) => setRiskTypeFilter(e.target.value)}
+              value={selectedCategory ?? ''}
+              onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : null)}
               className="border rounded-xl px-4 py-4 text-right bg-white"
             >
-              <option value="">كل الأنواع</option>
-              <option value="standard">قياسي</option>
-              <option value="custom">مخصص</option>
+              <option value="">كل الفئات</option>
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>
+                  {category.categoryName}
+                </option>
+              ))}
             </select>
 
             <select
@@ -471,16 +474,13 @@ const RiskInquiryPage: React.FC = () => {
             </select>
 
             <select
-              value={selectedCategory ?? ''}
-              onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : null)}
+              value={riskTypeFilter}
+              onChange={(e) => setRiskTypeFilter(e.target.value)}
               className="border rounded-xl px-4 py-4 text-right bg-white"
             >
-              <option value="">كل الفئات</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {category.categoryName}
-                </option>
-              ))}
+              <option value="">كل الأنواع</option>
+              <option value="standard">قياسي</option>
+              <option value="custom">مخصص</option>
             </select>
           </div>
 
@@ -514,13 +514,13 @@ const RiskInquiryPage: React.FC = () => {
                     className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-all cursor-pointer"
                   >
                     <div className="flex items-start justify-between mb-4">
-                      <div className={`${getRiskColor(score)} text-white px-3 py-1 rounded-lg text-sm font-bold`}>
-                        {getRiskLabel(score)}
-                      </div>
-
-                      <div className="text-right flex-1 mr-3">
+                      <div className="text-right flex-1">
                         <h3 className="text-xl font-bold text-gray-800 mb-1">{risk.riskName}</h3>
                         <p className="text-sm text-gray-500">{risk.categoryName}</p>
+                      </div>
+
+                      <div className={`${getRiskColor(score)} text-white px-3 py-1 rounded-lg text-sm font-bold shrink-0 ml-3`}>
+                        {getRiskLabel(score)}
                       </div>
                     </div>
 

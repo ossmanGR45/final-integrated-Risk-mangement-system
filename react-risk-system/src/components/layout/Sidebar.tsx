@@ -8,7 +8,8 @@ import {
   Logs,
   Search,
   ChevronDown,
-  ChevronLeft
+  ChevronLeft,
+  Users
 } from 'lucide-react';
 import { UserRole } from '../../types';
 import { getCurrentUser } from '../auth/authUtils';
@@ -45,6 +46,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role }) => {
     // السجلات = system audit log. Admin-only.
     ...(role === 'admin'
       ? [{ id: 'logs', label: 'السجلات', icon: Logs }]
+      : []),
+
+    ...(role === 'admin'
+      ? [{ id: 'users', label: 'المستخدمين', icon: Users }]
       : []),
 
     ...(role === 'admin'

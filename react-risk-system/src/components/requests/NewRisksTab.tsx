@@ -314,18 +314,29 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr className="text-xl">
-              <th className="px-6 py-4 text-center">إجراءات</th>
-              <th className="px-6 py-4 text-center">الحالة</th>
-              <th className="px-6 py-4 text-center">الفئة</th>
-              <th className="px-6 py-4 text-center">التاريخ</th>
-              <th className="px-6 py-4 text-center">اسم الخطر</th>
               <th className="px-6 py-4 text-center">رقم المقترح</th>
+              <th className="px-6 py-4 text-center">اسم الخطر</th>
+              <th className="px-6 py-4 text-center">التاريخ</th>
+              <th className="px-6 py-4 text-center">الفئة</th>
+              <th className="px-6 py-4 text-center">الحالة</th>
+              <th className="px-6 py-4 text-center">إجراءات</th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-gray-200">
             {filteredData.map(proposal => (
               <tr key={proposal.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 text-center text-lg font-medium">{proposal.id}</td>
+                <td className="px-6 py-4 text-center text-lg font-medium">{proposal.riskName}</td>
+                <td className="px-6 py-4 text-center text-lg">{proposal.submittedDate}</td>
+                <td className="px-6 py-4 text-center text-lg">{proposal.categoryName}</td>
+                <td className="px-6 py-4 text-center">
+                  <span
+                    className={`${statusMap[proposal.status]?.color || 'bg-gray-500'} text-white px-6 py-2 rounded-full text-lg font-medium`}
+                  >
+                    {statusMap[proposal.status]?.label || proposal.status}
+                  </span>
+                </td>
                 <td className="px-6 py-4 text-center">
                   <button
                     onClick={() => {
@@ -337,19 +348,6 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
                     عرض التفاصيل
                   </button>
                 </td>
-
-                <td className="px-6 py-4 text-center">
-                  <span
-                    className={`${statusMap[proposal.status]?.color || 'bg-gray-500'} text-white px-6 py-2 rounded-full text-lg font-medium`}
-                  >
-                    {statusMap[proposal.status]?.label || proposal.status}
-                  </span>
-                </td>
-
-                <td className="px-6 py-4 text-center text-lg">{proposal.categoryName}</td>
-                <td className="px-6 py-4 text-center text-lg">{proposal.submittedDate}</td>
-                <td className="px-6 py-4 text-center text-lg font-medium">{proposal.riskName}</td>
-                <td className="px-6 py-4 text-center text-lg font-medium">{proposal.id}</td>
               </tr>
             ))}
           </tbody>

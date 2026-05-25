@@ -152,27 +152,27 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr className="text-xl">
-              <th className="px-6 py-4 text-center">الحالة</th>
-              <th className="px-6 py-4 text-center">الفئة</th>
-              <th className="px-6 py-4 text-center">التاريخ</th>
-              <th className="px-6 py-4 text-center">اسم الخطر</th>
-              <th className="px-6 py-4 text-center">النوع</th>
               <th className="px-6 py-4 text-center">رقم</th>
+              <th className="px-6 py-4 text-center">النوع</th>
+              <th className="px-6 py-4 text-center">اسم الخطر</th>
+              <th className="px-6 py-4 text-center">التاريخ</th>
+              <th className="px-6 py-4 text-center">الفئة</th>
+              <th className="px-6 py-4 text-center">الحالة</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filtered.map(row => (
               <tr key={row.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 text-center text-lg font-medium">{row.id}</td>
+                <td className="px-6 py-4 text-center text-lg">{row.typeLabel}</td>
+                <td className="px-6 py-4 text-center text-lg font-medium">{row.name}</td>
+                <td className="px-6 py-4 text-center text-lg">{row.date}</td>
+                <td className="px-6 py-4 text-center text-lg">{row.category}</td>
                 <td className="px-6 py-4 text-center">
                   <span className={`${statusColor[row.status]} text-white px-6 py-2 rounded-full text-lg font-medium`}>
                     {statusLabel[row.status]}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-center text-lg">{row.category}</td>
-                <td className="px-6 py-4 text-center text-lg">{row.date}</td>
-                <td className="px-6 py-4 text-center text-lg font-medium">{row.name}</td>
-                <td className="px-6 py-4 text-center text-lg">{row.typeLabel}</td>
-                <td className="px-6 py-4 text-center text-lg font-medium">{row.id}</td>
               </tr>
             ))}
           </tbody>

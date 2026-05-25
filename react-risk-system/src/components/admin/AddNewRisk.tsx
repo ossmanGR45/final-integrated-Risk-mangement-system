@@ -916,18 +916,18 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
           onClick={() => toggleSection(key)}
           className="w-full px-6 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors"
         >
-          <div className="flex items-center gap-3 text-gray-500">
-            {isOpen ? <ChevronDown size={24} /> : <ChevronLeft size={24} />}
-            <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
-              {itemsCount} عنصر
-            </span>
-          </div>
-
           <div className="flex items-center gap-3 text-right">
+            <div className="text-gray-600">{icon}</div>
             <div className="text-right">
               <h4 className="text-xl font-bold text-gray-800">{title}</h4>
             </div>
-            <div className="text-gray-600">{icon}</div>
+          </div>
+
+          <div className="flex items-center gap-3 text-gray-500">
+            <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
+              {itemsCount} عنصر
+            </span>
+            {isOpen ? <ChevronDown size={24} /> : <ChevronLeft size={24} />}
           </div>
         </button>
 

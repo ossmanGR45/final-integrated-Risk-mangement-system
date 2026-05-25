@@ -518,12 +518,12 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr className="text-xl">
-              <th className="px-6 py-4 text-center">إجراءات</th>
-              <th className="px-6 py-4 text-center">الحالة</th>
-              <th className="px-6 py-4 text-center">الفئة</th>
-              <th className="px-6 py-4 text-center">التاريخ</th>
-              <th className="px-6 py-4 text-center">الخطر</th>
               <th className="px-6 py-4 text-center">رقم الطلب</th>
+              <th className="px-6 py-4 text-center">الخطر</th>
+              <th className="px-6 py-4 text-center">التاريخ</th>
+              <th className="px-6 py-4 text-center">الفئة</th>
+              <th className="px-6 py-4 text-center">الحالة</th>
+              <th className="px-6 py-4 text-center">إجراءات</th>
             </tr>
           </thead>
 
@@ -533,6 +533,17 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
 
               return (
                 <tr key={req.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-center text-lg font-medium">{req.id}</td>
+                  <td className="px-6 py-4 text-center text-lg font-medium">{req.name}</td>
+                  <td className="px-6 py-4 text-center text-lg">{req.date}</td>
+                  <td className="px-6 py-4 text-center text-lg">{req.category}</td>
+                  <td className="px-6 py-4 text-center">
+                    <span
+                      className={`${statusMeta.color} text-white px-6 py-2 rounded-full text-lg font-medium`}
+                    >
+                      {statusMeta.label}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 text-center">
                     <button
                       onClick={() => openRequestDetails(req)}
@@ -541,19 +552,6 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
                       عرض التفاصيل
                     </button>
                   </td>
-
-                  <td className="px-6 py-4 text-center">
-                    <span
-                      className={`${statusMeta.color} text-white px-6 py-2 rounded-full text-lg font-medium`}
-                    >
-                      {statusMeta.label}
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-4 text-center text-lg">{req.category}</td>
-                  <td className="px-6 py-4 text-center text-lg">{req.date}</td>
-                  <td className="px-6 py-4 text-center text-lg font-medium">{req.name}</td>
-                  <td className="px-6 py-4 text-center text-lg font-medium">{req.id}</td>
                 </tr>
               );
             })}

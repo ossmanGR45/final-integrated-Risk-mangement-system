@@ -13,6 +13,7 @@ import { UserRole } from './types';
 import AddNewRisk from './components/admin/AddNewRisk';
 import LogsPage from './components/logs/LogsPage';
 import Dashboard from './components/dashboard/Dashboard';
+import UsersPage from './components/admin/UsersPage';
 import { normalizeUserRole } from './components/auth/authUtils';
 import { STATUS_PENDING } from './utils/statusMapping';
 
@@ -380,6 +381,16 @@ const DashboardLayout = () => {
               element={
                 role === 'admin'
                   ? <LogsPage role={role} />
+                  : <Navigate to="/" />
+              }
+            />
+
+            {/* المستخدمين — user management, admin only */}
+            <Route
+              path="/users"
+              element={
+                role === 'admin'
+                  ? <UsersPage />
                   : <Navigate to="/" />
               }
             />

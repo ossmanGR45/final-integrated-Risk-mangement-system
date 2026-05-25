@@ -277,6 +277,12 @@ const Header: React.FC = () => {
 
   return (
     <header className="bg-white h-16 border-b border-gray-200 fixed top-0 left-0 right-64 z-10 flex items-center justify-between px-6">
+      <div className="flex items-center gap-3">
+        <div className="text-right">
+          <p className="text-sm font-bold">{user.username}</p>
+        </div>
+      </div>
+
       <div className="flex items-center gap-4">
         <button
           onClick={logout}
@@ -362,6 +368,11 @@ const Header: React.FC = () => {
           {isNotificationsOpen && (
             <div className="absolute top-full mt-3 left-0 w-[420px] max-h-[520px] bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden z-50">
               <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div className="text-right">
+                  <h3 className="text-lg font-bold">الإشعارات</h3>
+                  <p className="text-sm text-gray-500">{unreadCount} غير مقروءة</p>
+                </div>
+
                 <button
                   type="button"
                   onClick={markAllAsRead}
@@ -370,11 +381,6 @@ const Header: React.FC = () => {
                   <CheckCheck size={16} />
                   تحديد الكل كمقروء
                 </button>
-
-                <div className="text-right">
-                  <h3 className="text-lg font-bold">الإشعارات</h3>
-                  <p className="text-sm text-gray-500">{unreadCount} غير مقروءة</p>
-                </div>
               </div>
 
               <div className="max-h-[390px] overflow-y-auto">
@@ -448,12 +454,6 @@ const Header: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div className="text-right">
-          <p className="text-sm font-bold">{user.username}</p>
         </div>
       </div>
     </header>
