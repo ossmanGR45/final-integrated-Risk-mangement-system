@@ -1,7 +1,11 @@
 import axios from "axios";
 
 // Centralized API base URL. Change this once if the backend host changes.
-export const API_BASE = "https://localhost:7002/api";
+// Dynamically check if the React app is served on Docker port 3001
+const isDocker = typeof window !== 'undefined' && window.location.port === '3001';
+export const API_BASE = isDocker
+  ? "http://localhost:7002/api"
+  : "https://localhost:7002/api";
 
 export const http = axios.create({
   baseURL: API_BASE,

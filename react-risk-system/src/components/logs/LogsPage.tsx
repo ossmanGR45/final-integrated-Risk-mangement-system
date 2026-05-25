@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { UserRole } from '../../types';
+import { API_BASE } from '../../api/http';
 
 // What the backend actually returns from /api/logs and /api/logs/my.
 interface ApiAuditLog {
@@ -109,8 +110,8 @@ const LogsPage: React.FC<LogsPageProps> = ({ role }) => {
       const token = localStorage.getItem('authToken');
       const endpoint =
         role === 'admin'
-          ? 'https://localhost:7002/api/logs'
-          : 'https://localhost:7002/api/logs/my';
+          ? `${API_BASE}/logs`
+          : `${API_BASE}/logs/my`;
 
       const response = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },

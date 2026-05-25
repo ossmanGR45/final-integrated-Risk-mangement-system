@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { calculateRiskScore, getRiskColor, getRiskLabel } from '../../utils/riskCalculations';
 import RiskDetailModal from '../shared/RiskDetailModal';
+import { API_BASE } from '../../api/http';
 
 interface Category {
   id: number;
@@ -222,9 +223,9 @@ const RiskInquiryPage: React.FC = () => {
           : {};
 
         const [catRes, riskRes, respRes] = await Promise.all([
-          fetch('https://localhost:7002/api/category', { headers }),
-          fetch('https://localhost:7002/api/risk?custom=false&include=RiskActions.Action,RiskCauses.Cause,RiskGoals.StrategicGoal', { headers }),
-          fetch('https://localhost:7002/api/responsible', { headers })
+          fetch(`${API_BASE}/category`, { headers }),
+          fetch(`${API_BASE}/risk?custom=false&include=RiskActions.Action,RiskCauses.Cause,RiskGoals.StrategicGoal`, { headers }),
+          fetch(`${API_BASE}/responsible`, { headers })
         ]);
 
         setCategories(await catRes.json());

@@ -20,6 +20,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { RiskMode } from '../../types';
+import { API_BASE } from '../../api/http';
 import {
   calculateRiskScore,
   getRiskColor,
@@ -114,7 +115,6 @@ interface RiskItem {
 }
 
 const USER_DEPARTMENT = 'كلية تقنية المعلومات';
-const API_BASE = 'https://localhost:7002/api';
 const EMPTY_LIST = [''];
 
 const RiskLevelsInfo = () => (

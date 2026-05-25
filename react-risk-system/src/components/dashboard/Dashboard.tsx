@@ -4,6 +4,7 @@ import {
   CheckCircle2, XCircle, X, MapPin, User, Activity
 } from 'lucide-react';
 import { calculateRiskScore, getRiskColor, getRiskLabel } from '../../utils/riskCalculations';
+import { API_BASE } from '../../api/http';
 import RiskDetailModal, { RiskFull, ResponsibleEntity } from '../shared/RiskDetailModal';
 import {
   BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell,
@@ -49,7 +50,7 @@ type RawRisk = {
   RiskGoals?: RiskGoalMappingDto[] | null;
 };
 
-const API_BASE = 'https://localhost:7002/api';
+
 
 const toStringArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];

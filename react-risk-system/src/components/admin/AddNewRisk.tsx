@@ -17,6 +17,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { calculateRiskScore, getRiskColor, getRiskLabel } from '../../utils/riskCalculations';
+import { API_BASE } from '../../api/http';
 
 interface AddNewRiskProps {
   onSubmit?: (data: any) => void;
@@ -100,7 +101,6 @@ type TabKey =
 type SectionKey = 'strategicGoals' | 'causes' | 'responseActions' | 'preventiveActions';
 
 const emptyList: string[] = [];
-const API_BASE = 'https://localhost:7002/api';
 
 const AddNewRisk: React.FC<AddNewRiskProps> = ({
   onCancel,

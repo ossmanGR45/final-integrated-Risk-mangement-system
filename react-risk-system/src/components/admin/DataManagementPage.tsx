@@ -15,8 +15,9 @@ import {
   Briefcase
 } from 'lucide-react';
 import AddNewRisk from './AddNewRisk';
+import { API_BASE } from '../../api/http';
 
-const API_BASE = 'https://localhost:7002/api';
+
 
 export type ManagementType =
   | 'role'

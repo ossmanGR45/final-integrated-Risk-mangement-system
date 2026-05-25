@@ -17,6 +17,7 @@ import UsersPage from './components/admin/UsersPage';
 import DataManagementPage from './components/admin/DataManagementPage';
 import { normalizeUserRole } from './components/auth/authUtils';
 import { STATUS_PENDING } from './utils/statusMapping';
+import { API_BASE } from './api/http';
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -169,7 +170,7 @@ const DashboardLayout = () => {
                           : [],
                       };
 
-                      const response = await fetch('https://localhost:7002/api/requests/addUpdate', {
+                      const response = await fetch(`${API_BASE}/requests/addUpdate`, {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
@@ -223,7 +224,7 @@ const DashboardLayout = () => {
                         strategicGoals: [],
                       };
 
-                      const response = await fetch('https://localhost:7002/api/risk/addUpdate', {
+                      const response = await fetch(`${API_BASE}/risk/addUpdate`, {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
