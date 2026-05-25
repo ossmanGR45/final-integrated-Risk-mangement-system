@@ -14,6 +14,7 @@ import AddNewRisk from './components/admin/AddNewRisk';
 import LogsPage from './components/logs/LogsPage';
 import Dashboard from './components/dashboard/Dashboard';
 import UsersPage from './components/admin/UsersPage';
+import DataManagementPage from './components/admin/DataManagementPage';
 import { normalizeUserRole } from './components/auth/authUtils';
 import { STATUS_PENDING } from './utils/statusMapping';
 
@@ -243,21 +244,10 @@ const DashboardLayout = () => {
             />
 
             <Route
-              path="/add-new-risk"
+              path="/manage-user"
               element={
                 role === 'admin' ? (
-                  <AddNewRisk
-                    initialTab="risk"
-                    initialData={addNewRiskInitialData || undefined}
-                    onSubmit={() => {
-                      clearAddNewRiskState();
-                      navigate('/requests');
-                    }}
-                    onCancel={() => {
-                      clearAddNewRiskState();
-                      navigate('/');
-                    }}
-                  />
+                  <UsersPage />
                 ) : (
                   <Navigate to="/" />
                 )
@@ -265,14 +255,10 @@ const DashboardLayout = () => {
             />
 
             <Route
-              path="/add-category"
+              path="/manage-role"
               element={
                 role === 'admin' ? (
-                  <AddNewRisk
-                    initialTab="category"
-                    keepTabAfterCreate
-                    onCancel={() => navigate('/')}
-                  />
+                  <DataManagementPage type="role" />
                 ) : (
                   <Navigate to="/" />
                 )
@@ -280,14 +266,10 @@ const DashboardLayout = () => {
             />
 
             <Route
-              path="/add-responsible"
+              path="/manage-strategic-goal"
               element={
                 role === 'admin' ? (
-                  <AddNewRisk
-                    initialTab="responsible"
-                    keepTabAfterCreate
-                    onCancel={() => navigate('/')}
-                  />
+                  <DataManagementPage type="strategicGoal" />
                 ) : (
                   <Navigate to="/" />
                 )
@@ -295,14 +277,10 @@ const DashboardLayout = () => {
             />
 
             <Route
-              path="/add-department"
+              path="/manage-risk"
               element={
                 role === 'admin' ? (
-                  <AddNewRisk
-                    initialTab="department"
-                    keepTabAfterCreate
-                    onCancel={() => navigate('/')}
-                  />
+                  <DataManagementPage type="risk" />
                 ) : (
                   <Navigate to="/" />
                 )
@@ -310,14 +288,10 @@ const DashboardLayout = () => {
             />
 
             <Route
-              path="/add-strategic-goal"
+              path="/manage-department"
               element={
                 role === 'admin' ? (
-                  <AddNewRisk
-                    initialTab="strategicGoal"
-                    keepTabAfterCreate
-                    onCancel={() => navigate('/')}
-                  />
+                  <DataManagementPage type="department" />
                 ) : (
                   <Navigate to="/" />
                 )
@@ -325,14 +299,10 @@ const DashboardLayout = () => {
             />
 
             <Route
-              path="/add-cause"
+              path="/manage-category"
               element={
                 role === 'admin' ? (
-                  <AddNewRisk
-                    initialTab="cause"
-                    keepTabAfterCreate
-                    onCancel={() => navigate('/')}
-                  />
+                  <DataManagementPage type="category" />
                 ) : (
                   <Navigate to="/" />
                 )
@@ -340,14 +310,10 @@ const DashboardLayout = () => {
             />
 
             <Route
-              path="/add-response-action"
+              path="/manage-responsible"
               element={
                 role === 'admin' ? (
-                  <AddNewRisk
-                    initialTab="responseAction"
-                    keepTabAfterCreate
-                    onCancel={() => navigate('/')}
-                  />
+                  <DataManagementPage type="responsible" />
                 ) : (
                   <Navigate to="/" />
                 )
@@ -355,14 +321,32 @@ const DashboardLayout = () => {
             />
 
             <Route
-              path="/add-preventive-action"
+              path="/manage-cause"
               element={
                 role === 'admin' ? (
-                  <AddNewRisk
-                    initialTab="preventiveAction"
-                    keepTabAfterCreate
-                    onCancel={() => navigate('/')}
-                  />
+                  <DataManagementPage type="cause" />
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
+
+            <Route
+              path="/manage-response-action"
+              element={
+                role === 'admin' ? (
+                  <DataManagementPage type="responseAction" />
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
+
+            <Route
+              path="/manage-preventive-action"
+              element={
+                role === 'admin' ? (
+                  <DataManagementPage type="preventiveAction" />
                 ) : (
                   <Navigate to="/" />
                 )
@@ -392,20 +376,6 @@ const DashboardLayout = () => {
                 role === 'admin'
                   ? <UsersPage />
                   : <Navigate to="/" />
-              }
-            />
-
-            <Route
-              path="/settings"
-              element={
-                role === 'admin' ? (
-                  <div className="bg-white rounded-lg p-8 shadow-sm">
-                    <h1 className="text-3xl font-bold text-right">الإعدادات</h1>
-                    <p className="text-gray-600 mt-4 text-right">صفحة الإعدادات قيد التطوير...</p>
-                  </div>
-                ) : (
-                  <Navigate to="/" />
-                )
               }
             />
 

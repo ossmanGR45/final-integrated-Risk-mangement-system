@@ -46,28 +46,22 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role }) => {
     // السجلات = system audit log. Admin-only.
     ...(role === 'admin'
       ? [{ id: 'logs', label: 'السجلات', icon: Logs }]
-      : []),
-
-    ...(role === 'admin'
-      ? [{ id: 'users', label: 'المستخدمين', icon: Users }]
-      : []),
-
-    ...(role === 'admin'
-      ? [{ id: 'settings', label: 'الإعدادات', icon: Settings }]
       : [])
   ];
 
   const addMenuItems = useMemo(
     () => (role === 'admin'
       ? [
-          { id: 'add-new-risk', label: 'إضافة مخاطرة', icon: Plus },
-          { id: 'add-category', label: 'إضافة فئة', icon: Plus },
-          { id: 'add-responsible', label: 'إضافة جهة مسؤولة', icon: Plus },
-          { id: 'add-department', label: 'إضافة قسم', icon: Plus },
-          { id: 'add-strategic-goal', label: 'إضافة غاية استراتيجية', icon: Plus },
-          { id: 'add-cause', label: 'إضافة سبب', icon: Plus },
-          { id: 'add-response-action', label: 'إضافة إجراء عند وقوع الخطر', icon: Plus },
-          { id: 'add-preventive-action', label: 'إضافة إجراء وقائي', icon: Plus }
+          { id: 'manage-user', label: 'مستخدم', icon: Plus },
+          { id: 'manage-role', label: 'منصب وظيفي', icon: Plus },
+          { id: 'manage-strategic-goal', label: 'غاية إستراتيجية', icon: Plus },
+          { id: 'manage-risk', label: 'خطر', icon: Plus },
+          { id: 'manage-department', label: 'قسم', icon: Plus },
+          { id: 'manage-category', label: 'فئة', icon: Plus },
+          { id: 'manage-responsible', label: 'جهة مسؤولة', icon: Plus },
+          { id: 'manage-cause', label: 'سبب خطر', icon: Plus },
+          { id: 'manage-response-action', label: 'إجراء عند حدوث الخطر', icon: Plus },
+          { id: 'manage-preventive-action', label: 'إجراء لتجنب حدوث الخطر', icon: Plus }
         ]
       : []),
     [role]
@@ -115,7 +109,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role }) => {
             >
               <span className="flex items-center gap-3">
                 <Plus size={20} />
-                <span>إضافة</span>
+                <span>إضافة وتعديل عناصر</span>
               </span>
               {isAddMenuOpen ? <ChevronDown size={18} /> : <ChevronLeft size={18} />}
             </button>

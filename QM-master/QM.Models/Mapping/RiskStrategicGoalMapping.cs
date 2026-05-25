@@ -1,5 +1,6 @@
 using QM.Models.DataModels;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace QM.Models.Mapping
 {
@@ -7,6 +8,7 @@ namespace QM.Models.Mapping
     {
        
         public int RiskId { get; set; }
+        [JsonIgnore]
         public Risk Risk { get; set; }
 
         public bool Custom { get; set; }

@@ -1,4 +1,4 @@
-﻿using LinqKit;
+using LinqKit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -88,6 +88,21 @@ namespace QM.Controller
             await _uow.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetActions), new { id = createdAction.Id }, createdAction);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var _manager = new Manager<Actions>(_uow);
+            var record = await _manager.GetByIdAsync(id);
+            if (record == null)
+                return NotFound("Record not found.");
+
+            await _manager.DeleteAsync(record);
+            await _uow.SaveChangesAsync();
+
+            return Ok(new { Message = "Deleted successfully." });
         }
     }
 }

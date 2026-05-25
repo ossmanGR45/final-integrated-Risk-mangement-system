@@ -2,6 +2,7 @@ using QM.Models.Mapping;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using static QM.Models.Enums;
 
 namespace QM.Models.DataModels
@@ -15,6 +16,7 @@ namespace QM.Models.DataModels
 
         // Navigation Properties
        
+        [JsonIgnore]
         public ICollection<RiskActionMapping>? RiskActions { get; set; } = null;
         public ICollection<ActionCauseMapping>? ActionCauses { get; set; } = null;
         public ICollection<RequestActionMapping>? RequestActions { get; set; } = null;

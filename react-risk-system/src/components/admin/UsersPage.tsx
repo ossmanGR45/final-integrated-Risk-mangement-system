@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { UserPlus, Edit2, Trash2, Users, Search, Shield, X, Check, Mail, Lock, User as UserIcon, Award } from 'lucide-react';
 
-const API_BASE = 'http://localhost:7002/api';
+const API_BASE = 'https://localhost:7002/api';
 
 interface UserItem {
   employeeId: number;
@@ -369,7 +369,7 @@ export default function UsersPage() {
       {/* Add User Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-[150] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden relative">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]">
             <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-5 flex items-center justify-between">
               <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
                 <span>إضافة مستخدم جديد</span>
@@ -384,7 +384,7 @@ export default function UsersPage() {
               </button>
             </div>
 
-            <form onSubmit={handleAddUser} className="p-6 space-y-4">
+            <form onSubmit={handleAddUser} className="p-6 space-y-4 overflow-y-auto">
               {/* Employee ID */}
               <div>
                 <label className="block text-right text-sm font-bold text-gray-700 mb-1">رقم الموظف *</label>
@@ -504,7 +504,7 @@ export default function UsersPage() {
       {/* Edit User Modal */}
       {isEditModalOpen && selectedUser && (
         <div className="fixed inset-0 bg-black/50 z-[150] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden relative">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]">
             <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-5 flex items-center justify-between">
               <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
                 <span>تعديل الصلاحيات: {selectedUser.userName}</span>
@@ -522,7 +522,7 @@ export default function UsersPage() {
               </button>
             </div>
 
-            <form onSubmit={handleEditUser} className="p-6 space-y-4">
+            <form onSubmit={handleEditUser} className="p-6 space-y-4 overflow-y-auto">
               {/* Role Dropdown */}
               <div>
                 <label className="block text-right text-sm font-bold text-gray-700 mb-1">الصلاحية / الدور *</label>

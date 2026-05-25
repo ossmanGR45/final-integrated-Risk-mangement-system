@@ -51,5 +51,20 @@ namespace QM.Controller
             await _uow.SaveChangesAsync();
             return CreatedAtAction(nameof(GetDepartments), new { id = createdDepartment.Id }, createdDepartment);
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var _manager = new Manager<Department>(_uow);
+            var record = await _manager.GetByIdAsync(id);
+            if (record == null)
+                return NotFound("Record not found.");
+
+            await _manager.DeleteAsync(record);
+            await _uow.SaveChangesAsync();
+
+            return Ok(new { Message = "Deleted successfully." });
+        }
     }
 }

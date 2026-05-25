@@ -24,6 +24,7 @@ interface AddNewRiskProps {
   initialData?: Partial<AddRiskInitialData>;
   initialTab?: TabKey;
   keepTabAfterCreate?: boolean;
+  hideTabs?: boolean;
 }
 
 interface AddRiskInitialData {
@@ -94,7 +95,8 @@ type TabKey =
   | 'cause'
   | 'responseAction'
   | 'preventiveAction'
-  | 'risk';
+  | 'risk'
+  | 'role';
 type SectionKey = 'strategicGoals' | 'causes' | 'responseActions' | 'preventiveActions';
 
 const emptyList: string[] = [];
@@ -105,7 +107,8 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
   onSubmit,
   initialData,
   initialTab = 'risk',
-  keepTabAfterCreate = false
+  keepTabAfterCreate = false,
+  hideTabs = false
 }) => {
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [isLoading, setIsLoading] = useState(false);
@@ -146,6 +149,10 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
 
   const [preventiveActionForm, setPreventiveActionForm] = useState({
     actionDescription: ''
+  });
+
+  const [roleForm, setRoleForm] = useState({
+    roleName: ''
   });
 
   const [responsibleForm, setResponsibleForm] = useState({
@@ -504,6 +511,48 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
     } catch (error) {
       console.error('Error creating category:', error);
       alert(`حدث خطأ أثناء إضافة الفئة: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateRole = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!roleForm.roleName.trim()) {
+      alert('الرجاء إدخال اسم المنصب الوظيفي');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/role/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          roleName: roleForm.roleName.trim()
+        })
+      });
+
+      const result = await parseJsonSafe(response);
+
+      if (!response.ok) {
+        alert(result?.message || 'فشل إنشاء المنصب الوظيفي');
+        return;
+      }
+
+      setRoleForm({ roleName: '' });
+      alert(result?.message || 'تمت إضافة المنصب الوظيفي بنجاح');
+      if (!keepTabAfterCreate) {
+        setActiveTab('risk');
+      }
+    } catch (error) {
+      console.error('Error creating role:', error);
+      alert(`حدث خطأ أثناء إضافة المنصب الوظيفي: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
     }
@@ -990,135 +1039,190 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
 
   return (
     <div className="bg-white rounded-2xl shadow-md">
-      <div className="p-8 border-b border-gray-200">
-        <h2 className="text-3xl font-bold text-right">إدارة بيانات المخاطر</h2>
-        <p className="text-gray-600 mt-2 text-right">
-          من هنا يستطيع الأدمن إضافة فئة جديدة أو جهة مسؤولة أو مخاطرة جديدة مباشرة إلى قاعدة البيانات
-        </p>
-      </div>
+      {!hideTabs && (
+        <div className="p-8 border-b border-gray-200">
+          <h2 className="text-3xl font-bold text-right">إدارة بيانات المخاطر</h2>
+          <p className="text-gray-600 mt-2 text-right">
+            من هنا يستطيع الأدمن إضافة فئة جديدة أو جهة مسؤولة أو مخاطرة جديدة مباشرة إلى قاعدة البيانات
+          </p>
+        </div>
+      )}
 
       <div className="p-8 space-y-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <button
-            type="button"
-            onClick={() => setActiveTab('risk')}
-            className={`rounded-2xl p-5 text-lg font-bold transition ${
-              activeTab === 'risk'
-                ? 'bg-blue-600 text-white shadow'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <ShieldAlert size={20} />
-              إضافة مخاطرة
-            </div>
-          </button>
+        {!hideTabs && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <button
+              type="button"
+              onClick={() => setActiveTab('risk')}
+              className={`rounded-2xl p-5 text-lg font-bold transition ${
+                activeTab === 'risk'
+                  ? 'bg-blue-600 text-white shadow'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <ShieldAlert size={20} />
+                إضافة مخاطرة
+              </div>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('category')}
-            className={`rounded-2xl p-5 text-lg font-bold transition ${
-              activeTab === 'category'
-                ? 'bg-green-600 text-white shadow'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Building2 size={20} />
-              إضافة فئة
-            </div>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('category')}
+              className={`rounded-2xl p-5 text-lg font-bold transition ${
+                activeTab === 'category'
+                  ? 'bg-green-600 text-white shadow'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Building2 size={20} />
+                إضافة فئة
+              </div>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('responsible')}
-            className={`rounded-2xl p-5 text-lg font-bold transition ${
-              activeTab === 'responsible'
-                ? 'bg-purple-600 text-white shadow'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Users size={20} />
-              إضافة جهة مسؤولة
-            </div>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('responsible')}
+              className={`rounded-2xl p-5 text-lg font-bold transition ${
+                activeTab === 'responsible'
+                  ? 'bg-purple-600 text-white shadow'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Users size={20} />
+                إضافة جهة مسؤولة
+              </div>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('department')}
-            className={`rounded-2xl p-5 text-lg font-bold transition ${
-              activeTab === 'department'
-                ? 'bg-amber-600 text-white shadow'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Building2 size={20} />
-              إضافة قسم
-            </div>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('department')}
+              className={`rounded-2xl p-5 text-lg font-bold transition ${
+                activeTab === 'department'
+                  ? 'bg-amber-600 text-white shadow'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Building2 size={20} />
+                إضافة قسم
+              </div>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('strategicGoal')}
-            className={`rounded-2xl p-5 text-lg font-bold transition ${
-              activeTab === 'strategicGoal'
-                ? 'bg-cyan-600 text-white shadow'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Target size={20} />
-              إضافة غاية استراتيجية
-            </div>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('strategicGoal')}
+              className={`rounded-2xl p-5 text-lg font-bold transition ${
+                activeTab === 'strategicGoal'
+                  ? 'bg-cyan-600 text-white shadow'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Target size={20} />
+                إضافة غاية استراتيجية
+              </div>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('cause')}
-            className={`rounded-2xl p-5 text-lg font-bold transition ${
-              activeTab === 'cause'
-                ? 'bg-red-600 text-white shadow'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <AlertCircle size={20} />
-              إضافة سبب
-            </div>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('cause')}
+              className={`rounded-2xl p-5 text-lg font-bold transition ${
+                activeTab === 'cause'
+                  ? 'bg-red-600 text-white shadow'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <AlertCircle size={20} />
+                إضافة سبب
+              </div>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('responseAction')}
-            className={`rounded-2xl p-5 text-lg font-bold transition ${
-              activeTab === 'responseAction'
-                ? 'bg-orange-600 text-white shadow'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Siren size={20} />
-              إضافة إجراء عند وقوع الخطر
-            </div>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('responseAction')}
+              className={`rounded-2xl p-5 text-lg font-bold transition ${
+                activeTab === 'responseAction'
+                  ? 'bg-orange-600 text-white shadow'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Siren size={20} />
+                إضافة إجراء عند وقوع الخطر
+              </div>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('preventiveAction')}
-            className={`rounded-2xl p-5 text-lg font-bold transition ${
-              activeTab === 'preventiveAction'
-                ? 'bg-indigo-600 text-white shadow'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <ShieldCheck size={20} />
-              إضافة إجراء وقائي
+            <button
+              type="button"
+              onClick={() => setActiveTab('preventiveAction')}
+              className={`rounded-2xl p-5 text-lg font-bold transition ${
+                activeTab === 'preventiveAction'
+                  ? 'bg-indigo-600 text-white shadow'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <ShieldCheck size={20} />
+                إضافة إجراء وقائي
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('role')}
+              className={`rounded-2xl p-5 text-lg font-bold transition ${
+                activeTab === 'role'
+                  ? 'bg-teal-600 text-white shadow'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Users size={20} />
+                إضافة منصب وظيفي
+              </div>
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'role' && (
+          <form onSubmit={handleCreateRole} className="space-y-6">
+            <div className="bg-gray-50 rounded-2xl p-8 space-y-6">
+              <h3 className="text-2xl font-bold text-right">إضافة منصب وظيفي جديد</h3>
+
+              <div>
+                <label className="block mb-3 text-right font-semibold">اسم المنصب الوظيفي</label>
+                <input
+                  value={roleForm.roleName}
+                  onChange={(e) => setRoleForm({ roleName: e.target.value })}
+                  className="w-full px-4 py-4 border rounded-xl bg-white text-right"
+                  placeholder="مثال: Specialist"
+                />
+              </div>
+
+              <div className="flex gap-4 justify-start">
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="px-8 py-4 bg-teal-600 text-white rounded-xl hover:bg-teal-700 disabled:opacity-60"
+                >
+                  حفظ المنصب الوظيفي
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="px-8 py-4 border rounded-xl"
+                >
+                  إلغاء
+                </button>
+              </div>
             </div>
-          </button>
-        </div>
+          </form>
+        )}
 
         {activeTab === 'category' && (
           <form onSubmit={handleCreateCategory} className="space-y-6">

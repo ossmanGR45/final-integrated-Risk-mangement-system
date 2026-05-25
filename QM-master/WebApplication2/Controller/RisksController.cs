@@ -400,5 +400,20 @@ namespace QM.Controller
                 });
             }
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var _manager = new Manager<Risk>(_uow);
+            var record = await _manager.GetByIdAsync(id);
+            if (record == null)
+                return NotFound("Record not found.");
+
+            await _manager.DeleteAsync(record);
+            await _uow.SaveChangesAsync();
+
+            return Ok(new { Message = "Deleted successfully." });
+        }
     }
 }

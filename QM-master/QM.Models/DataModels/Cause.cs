@@ -1,6 +1,7 @@
 using QM.Models.Mapping;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace QM.Models.DataModels
 {
@@ -12,6 +13,7 @@ namespace QM.Models.DataModels
 
         // Navigation Properties
       
+        [JsonIgnore]
         public ICollection<RiskCauseMapping>? RiskCauses { get; set; } = null;
         public ICollection<ActionCauseMapping>? ActionCauses { get; set; } = null;
         public ICollection<RequestCauseMapping>? RequestCauses { get; set; } = null;
