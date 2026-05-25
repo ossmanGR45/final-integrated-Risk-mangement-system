@@ -108,20 +108,7 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-row">
-      {/* Left Side - Background Photo */}
-      <div 
-        className="hidden md:block flex-1 relative overflow-hidden"
-        style={{
-          backgroundImage: 'url(/loginphoto.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-      </div>
-
-      {/* Right Side - Login Form */}
+      {/* Right Side - Login Form (first in DOM = right side in RTL layout) */}
       <div className="w-full md:w-[480px] bg-white flex items-center justify-center p-6 shadow-2xl flex-shrink-0">
         <div className="w-full max-w-md">
           <div className="text-center mb-6">
@@ -223,6 +210,19 @@ const LoginPage: React.FC = () => {
             </a>
           </div>
         </div>
+      </div>
+
+      {/* Left Side - Background Photo (second in DOM = left side in RTL layout) */}
+      <div 
+        className="hidden md:block flex-1 relative overflow-hidden"
+        style={{
+          backgroundImage: 'url(/loginphoto.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
       </div>
     </div>
   );
