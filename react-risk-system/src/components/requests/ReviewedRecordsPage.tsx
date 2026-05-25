@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { UserRole } from '../../types';
 import { uiStatusFromApi, UiStatus } from '../../utils/statusMapping';
+import { API_BASE } from '../../api/http';
 
 // Unified row for the merged history list.
 interface ReviewedRow {
@@ -48,8 +49,8 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
       // Both endpoints return only items the current user is allowed to see
       // (initiator: own; manager: own + reports; admin: everything redirected).
       const [reqRes, riskRes] = await Promise.all([
-        fetch('https://localhost:7002/api/requests?pending=false', { headers }),
-        fetch('https://localhost:7002/api/risk', { headers }),
+        fetch(`${API_BASE}/requests?pending=false`, { headers }),
+        fetch(`${API_BASE}/risk`, { headers }),
       ]);
 
       const requests = reqRes.ok ? await reqRes.json() : [];

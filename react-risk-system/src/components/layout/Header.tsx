@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { logout, getCurrentUser } from '../auth/authUtils';
+import { API_BASE } from '../../api/http';
 
 type ThemePreference = 'light' | 'dark' | 'system';
 type ResolvedTheme = 'light' | 'dark';
@@ -167,7 +168,7 @@ const Header: React.FC = () => {
 
         // Real notification endpoint. The backend filters by the current user
         // automatically (admin gets all unless they pass userId).
-        const response = await fetch('https://localhost:7002/api/notification', {
+        const response = await fetch(`${API_BASE}/notification`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

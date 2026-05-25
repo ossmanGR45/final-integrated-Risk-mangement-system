@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { UserRole } from '../../types';
 import NewRequestForm from './NewRequestForm';
+import { API_BASE } from '../../api/http';
 import {
   STATUS_ACCEPT,
   STATUS_REJECT,
@@ -180,7 +181,7 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
     try {
       setIsLoading(true);
       const pendingFlag = mode === 'pending' ? 'true' : 'false';
-      const url = `https://localhost:7002/api/requests?pending=${pendingFlag}`;
+      const url = `${API_BASE}/requests?pending=${pendingFlag}`;
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -275,7 +276,7 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
   };
 
   const saveRequestUpdate = async (body: any) => {
-    const response = await fetch(`https://localhost:7002/api/requests/addUpdate`, {
+    const response = await fetch(`${API_BASE}/requests/addUpdate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -339,7 +340,7 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
         : [],
     };
 
-    const response = await fetch(`https://localhost:7002/api/requests/addUpdate`, {
+    const response = await fetch(`${API_BASE}/requests/addUpdate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { UserPlus, Edit2, Trash2, Users, Search, Shield, X, Check, Mail, Lock, User as UserIcon, Award } from 'lucide-react';
+import { API_BASE } from '../../api/http';
 
-const API_BASE = 'https://localhost:7002/api';
+
 
 interface UserItem {
   employeeId: number;

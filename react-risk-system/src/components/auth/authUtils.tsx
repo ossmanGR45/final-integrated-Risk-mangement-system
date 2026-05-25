@@ -3,7 +3,7 @@
 
 import type { UserRole } from '../../types';
 
-const API_BASE = 'https://localhost:7002/api';
+import { API_BASE } from '../../api/http';
 
 /** Map Identity/JWT role names to app `UserRole` (localStorage uses these lowercase values). */
 export function normalizeUserRole(raw: string | null | undefined): UserRole {

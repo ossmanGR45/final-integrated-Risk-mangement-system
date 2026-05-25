@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { normalizeUserRole } from './authUtils';
+import { API_BASE } from '../../api/http';
 
-const API_URL = 'https://localhost:7002/api/auth/login';
+const API_URL = `${API_BASE}/auth/login`;
 
 interface LoginResponse {
   token: string;

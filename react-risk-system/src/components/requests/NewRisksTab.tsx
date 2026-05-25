@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { UserRole } from '../../types';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from '../../api/http';
 import {
   STATUS_FORWARD_TO_ADMIN,
   STATUS_REJECT,
@@ -141,7 +142,7 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
       // Show suggestion records: Custom=true regardless of role.
       // The backend already scopes by role, so a manager only sees their team's
       // and admin sees everything.
-      const endpoint = `https://localhost:7002/api/risk?custom=true`;
+      const endpoint = `${API_BASE}/risk?custom=true`;
 
       const response = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
@@ -181,7 +182,7 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
     try {
       const token = localStorage.getItem('authToken');
 
-      const response = await fetch(`https://localhost:7002/api/risk/addUpdate`, {
+      const response = await fetch(`${API_BASE}/risk/addUpdate`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -214,7 +215,7 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
     try {
       const token = localStorage.getItem('authToken');
 
-      const response = await fetch(`https://localhost:7002/api/risk/addUpdate`, {
+      const response = await fetch(`${API_BASE}/risk/addUpdate`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
