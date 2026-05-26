@@ -280,7 +280,7 @@ export default function UsersPage() {
 
       {/* Filter and Search Table */}
       <div className="bg-white rounded-[28px] p-6 shadow-sm border border-gray-100">
-        <div className="flex justify-end mb-6">
+        <div className="flex justify-start mb-6">
           <div className="relative w-full max-w-md">
             <input
               type="text"
@@ -299,10 +299,10 @@ export default function UsersPage() {
             <thead>
               <tr className="border-b border-gray-100 text-gray-400 text-sm font-bold bg-slate-50/50">
                 <th className="px-6 py-4 text-right">رقم الموظف</th>
-                <th className="px-6 py-4 text-right">الاسم</th>
-                <th className="px-6 py-4 text-right">البريد الإلكتروني</th>
+                <th className="px-6 py-4 text-left">الاسم</th>
+                <th className="px-6 py-4 text-left">البريد الإلكتروني</th>
                 <th className="px-6 py-4 text-right">الصلاحية / الدور</th>
-                <th className="px-6 py-4 text-right">المدير المباشر</th>
+                <th className="px-6 py-4 text-left">المدير المباشر</th>
                 <th className="px-6 py-4 text-center">إجراءات</th>
               </tr>
             </thead>
@@ -312,22 +312,22 @@ export default function UsersPage() {
                 return (
                   <tr key={user.employeeId} className="hover:bg-slate-50/30 transition-colors">
                     <td className="px-6 py-4 text-right text-gray-500 font-bold">{user.employeeId}</td>
-                    <td className="px-6 py-4 text-right text-gray-900 font-bold">{user.userName}</td>
-                    <td className="px-6 py-4 text-right text-gray-700">{user.email}</td>
+                    <td className="px-6 py-4 text-left text-gray-900 font-bold" dir="ltr">{user.userName}</td>
+                    <td className="px-6 py-4 text-left text-gray-700" dir="ltr">{user.email}</td>
                     <td className="px-6 py-4 text-right">
                       <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold ${user.roles[0]?.toLowerCase() === 'admin'
-                          ? 'bg-red-50 text-red-700 border border-red-100'
-                          : user.roles[0]?.toLowerCase() === 'manager'
-                            ? 'bg-purple-50 text-purple-700 border border-purple-100'
-                            : 'bg-blue-50 text-[#105a9e] border border-blue-100'
+                        ? 'bg-red-50 text-red-700 border border-red-100'
+                        : user.roles[0]?.toLowerCase() === 'manager'
+                          ? 'bg-purple-50 text-purple-700 border border-purple-100'
+                          : 'bg-blue-50 text-[#105a9e] border border-blue-100'
                         }`}>
                         <Shield size={12} />
                         {getRoleLabel(user.roles)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right text-gray-600 font-medium">
+                    <td className="px-6 py-4 text-left text-gray-600 font-medium">
                       {manager ? (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-gray-700 text-sm">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-gray-700 text-sm" dir="ltr">
                           <span>{manager.userName}</span>
                           <span className="text-[10px] text-gray-400">({manager.employeeId})</span>
                         </div>

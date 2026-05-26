@@ -590,10 +590,10 @@ const Dashboard: React.FC = () => {
             </button>
 
             {showGoals && (
-              <div className="mt-4 rounded-[24px] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-6 md:p-8">
+              <div className="mt-4 rounded-[24px] border border-gray-200 bg-gray-50 p-6 md:p-8">
                 {strategicGoals.length === 0 ? (
                   <div className="text-center py-10">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-700"><Target size={28} /></div>
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-700"><Target size={28} /></div>
                     <h3 className="text-xl font-bold text-gray-800 mb-2">لا توجد غايات إستراتيجية حالياً</h3>
                     <p className="text-gray-500">قم بإضافة غايات إستراتيجية للنظام لكي تظهر هنا</p>
                   </div>
@@ -605,7 +605,7 @@ const Dashboard: React.FC = () => {
                         <p className="text-gray-500 mt-1">مرتبة بشكل جميل وواضح لسهولة الاستعراض</p>
                       </div>
                       <div className="hidden md:flex items-center gap-2">
-                        <span className="px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-bold">اكبس على أي غاية لعرض الأخطار المرتبطة بها</span>
+                        <span className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-sm font-bold">اكبس على أي غاية لعرض الأخطار المرتبطة بها</span>
                       </div>
                     </div>
 
@@ -615,7 +615,7 @@ const Dashboard: React.FC = () => {
                           key={`${goal.title}-${index}`}
                           type="button"
                           onClick={() => setSelectedGoal(goal)}
-                          className="group relative overflow-hidden rounded-3xl border border-blue-100 bg-white p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all text-right"
+                          className="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all text-right"
                         >
                           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-cyan-500 to-indigo-500"></div>
 
@@ -629,7 +629,7 @@ const Dashboard: React.FC = () => {
                               <div className="flex items-center justify-end gap-2 mb-3">
                                 <span className="text-sm text-gray-400 font-bold">#{index + 1}</span>
                                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-sm">
-                                  <Target size={18} />
+                                    <Target size={18} />
                                 </div>
                               </div>
                               <p className="text-gray-900 font-bold leading-8 text-lg">{goal.title}</p>
