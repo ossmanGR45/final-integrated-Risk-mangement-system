@@ -342,9 +342,9 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
           .map(item => item?.action?.actionDescription?.trim())
           .filter((item): item is string => Boolean(item));
       }
-      return getRiskGoalStrings(selectedRisk);
+      return [];
     }
-    return uniqueValues(risks.map(getRiskGoalStrings));
+    return [];
   }, [selectedRisk, risks]);
 
   useEffect(() => {
@@ -426,15 +426,7 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
     if (riskGoals.length > 0) {
       setStrategicGoal(prev => (prev && riskGoals.includes(prev) ? prev : riskGoals[0]));
     }
-
-    const loadedCauses = causeTemplates.length > 0 ? causeTemplates : [''];
-    const loadedActions = actionTemplates.length > 0 ? actionTemplates : [''];
-    const loadedPreventive = preventiveTemplates.length > 0 ? preventiveTemplates : [''];
-
-    setCauses(loadedCauses);
-    setResponseActions(loadedActions);
-    setPreventiveActions(loadedPreventive);
-  }, [selectedRisk, selectedRiskStrategicGoals, causeTemplates, actionTemplates, preventiveTemplates]);
+  }, [selectedRisk, selectedRiskStrategicGoals]);
 
   useEffect(() => {
     if (!selectedRisk?.id) return;
@@ -648,6 +640,11 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!strategicGoal) {
+      alert('الرجاء اختيار الغاية الاستراتيجية للمخاطرة');
+      return;
+    }
+
     const finalCauses = cleanList(causes);
     const finalResponseActions = cleanList(responseActions);
     const finalPreventiveActions = cleanList(preventiveActions);
@@ -806,29 +803,30 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
             >
               <div className="flex items-center gap-3 text-right">
                 <Target size={20} className="text-blue-600" />
-                <h4 className="text-xl font-bold text-gray-800">الغاية الاستراتيجية التي يؤثر بها الخطر</h4>
+                <h4 className="text-xl font-bold text-gray-800">
+                  الغاية الاستراتيجية التي يؤثر بها الخطر <span className="text-red-500">*</span>
+                </h4>
               </div>
               <div className="flex items-center gap-3 text-gray-500">
-                <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
-                  {selectedRiskStrategicGoals.length} عنصر
-                </span>
                 {expandedSections.strategicGoals ? <ChevronDown size={22} /> : <ChevronLeft size={22} />}
               </div>
             </button>
 
             {expandedSections.strategicGoals && (
               <div className="border-t border-gray-200 p-5 space-y-3 bg-gray-50">
-                {selectedRiskStrategicGoals.length === 0 ? (
-                  <div className="px-4 py-3 rounded-xl bg-white border text-right text-gray-500">
-                    لا توجد غايات استراتيجية مرتبطة بالخطر المختار
-                  </div>
-                ) : (
-                  selectedRiskStrategicGoals.map((goal, index) => (
-                    <div key={`${goal}-${index}`} className="px-4 py-3 rounded-xl bg-white border text-right">
+                <select
+                  value={strategicGoal}
+                  onChange={e => setStrategicGoal(e.target.value)}
+                  className="w-full px-4 py-4 rounded-xl border bg-white text-right font-semibold"
+                  required
+                >
+                  <option value="">اختر الغاية الاستراتيجية</option>
+                  {strategicGoalOptions.map((goal, index) => (
+                    <option key={`${goal}-${index}`} value={goal}>
                       {goal}
-                    </div>
-                  ))
-                )}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
           </div>

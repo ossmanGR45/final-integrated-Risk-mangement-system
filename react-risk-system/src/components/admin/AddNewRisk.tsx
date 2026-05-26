@@ -802,6 +802,11 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       return;
     }
 
+    if (cleanList(strategicGoals).length === 0) {
+      alert('الرجاء اختيار غاية إستراتيجية واحدة على الأقل');
+      return;
+    }
+
     const causeDtos = cleanList(causes).map(causeDescription => {
       // Look up existing cause in catalog to avoid creating a duplicate
       const existing = causesCatalog.find(
@@ -926,7 +931,8 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
     actionButtonLabel: string,
     suggestionPlaceholder: string,
     icon: React.ReactNode,
-    showAddCustomButton: boolean = true
+    showAddCustomButton: boolean = true,
+    required: boolean = false
   ) => {
     const isOpen = expandedSections[key];
     const itemsCount = countFilled(values);
@@ -941,7 +947,10 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
           <div className="flex items-center gap-3 text-right">
             <div className="text-gray-600">{icon}</div>
             <div className="text-right">
-              <h4 className="text-xl font-bold text-gray-800">{title}</h4>
+              <h4 className="text-xl font-bold text-gray-800">
+                {title}
+                {required && <span className="text-red-500 mr-1">*</span>}
+              </h4>
             </div>
           </div>
 
@@ -1441,7 +1450,8 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
                 'أضف غاية استراتيجية',
                 'اختر غاية استراتيجية جاهزة',
                 <Target size={20} />,
-                false
+                false,
+                true
               )}
               
 

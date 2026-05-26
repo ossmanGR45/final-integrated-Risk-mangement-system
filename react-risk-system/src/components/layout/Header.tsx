@@ -228,9 +228,22 @@ const Header: React.FC = () => {
     const day = 24 * hour;
 
     if (diff < minute) return 'الآن';
-    if (diff < hour) return `منذ ${Math.floor(diff / minute)} دقيقة`;
-    if (diff < day) return `منذ ${Math.floor(diff / hour)} ساعة`;
-    return `منذ ${Math.floor(diff / day)} يوم`;
+    if (diff < hour) {
+      const minutes = Math.floor(diff / minute);
+      return `منذ ${minutes} دقيقة`;
+    }
+    if (diff < day) {
+      const hours = Math.floor(diff / hour);
+      if (hours === 1) return 'منذ ساعة';
+      if (hours === 2) return 'منذ ساعتين';
+      if (hours >= 3 && hours <= 10) return `منذ ${hours} ساعات`;
+      return `منذ ${hours} ساعة`;
+    }
+    const days = Math.floor(diff / day);
+    if (days === 1) return 'منذ يوم';
+    if (days === 2) return 'منذ يومين';
+    if (days >= 3 && days <= 10) return `منذ ${days} أيام`;
+    return `منذ ${days} يوم`;
   };
 
   const markNotificationAsRead = (id: string) => {
@@ -246,7 +259,7 @@ const Header: React.FC = () => {
   const openNotification = (item: NotificationItem) => {
     markNotificationAsRead(item.id);
     setIsNotificationsOpen(false);
-    navigate(item.route);
+    navigate('/notifications', { state: { selectedNotificationId: item.id } });
   };
 
   const ThemeButton = ({
