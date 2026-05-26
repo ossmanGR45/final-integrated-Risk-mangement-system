@@ -15,6 +15,7 @@ import LogsPage from './components/logs/LogsPage';
 import Dashboard from './components/dashboard/Dashboard';
 import UsersPage from './components/admin/UsersPage';
 import DataManagementPage from './components/admin/DataManagementPage';
+import NotificationsPage from './components/notifications/NotificationsPage';
 import { normalizeUserRole } from './components/auth/authUtils';
 import { STATUS_PENDING } from './utils/statusMapping';
 import { API_BASE } from './api/http';
@@ -393,6 +394,7 @@ const DashboardLayout = () => {
             />
 
             <Route path="/risk-inquiry" element={<RiskInquiryPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
           </Routes>
         </div>
       </main>
