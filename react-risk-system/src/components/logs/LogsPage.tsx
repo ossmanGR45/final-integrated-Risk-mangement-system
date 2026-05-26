@@ -99,7 +99,8 @@ const LogsPage: React.FC<LogsPageProps> = ({ role }) => {
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
 
   const [filters, setFilters] = useState({
-    search: '',
+    searchUser: '',
+    logId: '',
     type: '',
     tableName: '',
   });
@@ -141,18 +142,18 @@ const LogsPage: React.FC<LogsPageProps> = ({ role }) => {
 
   const filteredLogs = useMemo(() => {
     const result = logs.filter(log => {
-      const matchesSearch =
-        !filters.search ||
-        log.type.toLowerCase().includes(filters.search.toLowerCase()) ||
-        log.tableName.toLowerCase().includes(filters.search.toLowerCase()) ||
-        log.recordId.toLowerCase().includes(filters.search.toLowerCase()) ||
-        log.details.toLowerCase().includes(filters.search.toLowerCase()) ||
-        log.affectedColumns.toLowerCase().includes(filters.search.toLowerCase());
+      const matchesUser =
+        !filters.searchUser ||
+        log.actorUserId.toLowerCase().includes(filters.searchUser.toLowerCase());
+
+      const matchesLogId =
+        !filters.logId ||
+        log.id.toLowerCase().includes(filters.logId.toLowerCase());
 
       const matchesType = !filters.type || log.type === filters.type;
       const matchesTable = !filters.tableName || log.tableName === filters.tableName;
 
-      return matchesSearch && matchesType && matchesTable;
+      return matchesUser && matchesLogId && matchesType && matchesTable;
     });
 
     const sorted = [...result].sort((a, b) => {
@@ -173,10 +174,7 @@ const LogsPage: React.FC<LogsPageProps> = ({ role }) => {
     return sorted;
   }, [logs, filters, sortBy]);
 
-  const allTypes = useMemo(
-    () => Array.from(new Set(logs.map(l => l.type).filter(Boolean))),
-    [logs],
-  );
+  const allTypes = ['إضافة', 'تعديل', 'حذف'];
   const allTables = useMemo(
     () => Array.from(new Set(logs.map(l => l.tableName).filter(Boolean))),
     [logs],
@@ -198,12 +196,19 @@ const LogsPage: React.FC<LogsPageProps> = ({ role }) => {
           {role === 'admin' ? 'السجلات' : 'سجلاتي'}
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <input
-            placeholder="بحث..."
+            placeholder="المستخدم..."
             className="border rounded px-4 py-3 text-lg"
-            value={filters.search}
-            onChange={e => setFilters({ ...filters, search: e.target.value })}
+            value={filters.searchUser}
+            onChange={e => setFilters({ ...filters, searchUser: e.target.value })}
+          />
+
+          <input
+            placeholder="رقم اللوغ..."
+            className="border rounded px-4 py-3 text-lg"
+            value={filters.logId}
+            onChange={e => setFilters({ ...filters, logId: e.target.value })}
           />
 
           <select
