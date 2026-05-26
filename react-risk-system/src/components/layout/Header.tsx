@@ -357,12 +357,10 @@ const Header: React.FC = () => {
             className="text-gray-600 hover:bg-gray-100 p-2 rounded relative"
           >
             <Bell size={20} />
-            {unreadCount > 0 ? (
+            {unreadCount > 0 && (
               <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center font-bold">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
-            ) : (
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             )}
           </button>
 
@@ -441,18 +439,6 @@ const Header: React.FC = () => {
                 )}
               </div>
 
-              <div className="px-5 py-4 border-t border-gray-200 bg-gray-50">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsNotificationsOpen(false);
-                    navigate(user.role === 'manager' ? '/requests' : '/logs');
-                  }}
-                  className="w-full text-center text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  عرض كل الإشعارات
-                </button>
-              </div>
             </div>
           )}
         </div>
