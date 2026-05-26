@@ -420,8 +420,7 @@ const RiskInquiryPage: React.FC = () => {
 
         <div className="bg-white rounded-2xl shadow-sm p-8 space-y-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Filter size={20} className="text-gray-500" />
+            <div>
               <h2 className="text-3xl font-bold text-right">
                 {selectedCategory ? `المخاطر التابعة لفئة: ${selectedCategoryName}` : 'جميع المخاطر'}
               </h2>
@@ -429,9 +428,10 @@ const RiskInquiryPage: React.FC = () => {
 
             <button
               onClick={clearFilters}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200"
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 flex items-center gap-2"
             >
-              مسح الفلاتر
+              <Filter size={18} className="text-gray-500" />
+              <span>مسح الفلاتر</span>
             </button>
           </div>
 
