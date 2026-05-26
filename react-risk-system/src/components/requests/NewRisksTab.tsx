@@ -273,7 +273,7 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-4xl font-bold mb-4 text-center">مقترحات المخاطر الجديدة</h2>
 
-        <div className={`grid ${role !== 'admin' ? 'grid-cols-3' : 'grid-cols-4'} gap-3`}>
+        <div className={`grid ${role !== 'admin' ? 'grid-cols-2' : 'grid-cols-3'} gap-3`}>
           <input
             placeholder="رقم المقترح"
             className="border rounded px-4 py-3 text-lg"
@@ -299,17 +299,6 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
               ))}
             </select>
           )}
-
-          <select
-            className="border rounded px-4 py-3 text-lg"
-            onChange={e => setFilters({ ...filters, status: e.target.value })}
-          >
-            <option value="">كل الحالات</option>
-            <option value="manager_review">بانتظار المدير</option>
-            <option value="admin_review">بانتظار الأدمن</option>
-            <option value="accepted">مقبول</option>
-            <option value="rejected">مرفوض</option>
-          </select>
         </div>
       </div>
 

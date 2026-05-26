@@ -638,21 +638,21 @@ const Dashboard: React.FC = () => {
                           key={`${goal.title}-${index}`}
                           type="button"
                           onClick={() => setSelectedGoal(goal)}
-                          className="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all text-right"
+                          className="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all text-right w-full"
                         >
                           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-cyan-500 to-indigo-500"></div>
 
-                          {/* Risk count badge - prominent in corner */}
-                          <div className="absolute top-3 left-3 w-11 h-11 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-lg font-black text-lg">
-                            {goal.count}
-                          </div>
+                          <div className="flex items-start gap-4">
+                            {/* Risk count badge - naturally on the right in RTL */}
+                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-lg font-black text-lg shrink-0">
+                              {goal.count}
+                            </div>
 
-                          <div className="flex items-start justify-end gap-4">
                             <div className="text-right flex-1">
-                              <div className="flex items-center justify-end gap-2 mb-3">
+                              <div className="flex items-center justify-between mb-3">
                                 <span className="text-sm text-gray-400 font-bold">#{index + 1}</span>
                                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-sm">
-                                    <Target size={18} />
+                                  <Target size={18} />
                                 </div>
                               </div>
                               <p className="text-gray-900 font-bold leading-8 text-lg">{goal.title}</p>
@@ -1091,14 +1091,14 @@ const Dashboard: React.FC = () => {
                         <p className="text-gray-600 text-right mb-4 line-clamp-2">{risk.riskDescription}</p>
 
                         <div className="space-y-2 text-sm">
-                          <div className="flex items-center justify-end gap-2 text-gray-600">
-                            <span>{risk.location}</span><MapPin size={16} />
+                          <div className="flex items-center justify-start gap-2 text-gray-600">
+                            <MapPin size={16} /><span>{risk.location}</span>
                           </div>
-                          <div className="flex items-center justify-end gap-2 text-gray-600">
-                            <span>{responsible?.entityName || 'غير محدد'}</span><User size={16} />
+                          <div className="flex items-center justify-start gap-2 text-gray-600">
+                            <User size={16} /><span>{responsible?.entityName || 'غير محدد'}</span>
                           </div>
-                          <div className="flex items-center justify-end gap-2 text-gray-600">
-                            <span>{risk.department}</span><Activity size={16} />
+                          <div className="flex items-center justify-start gap-2 text-gray-600">
+                            <Activity size={16} /><span>{risk.department}</span>
                           </div>
                         </div>
 

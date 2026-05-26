@@ -450,7 +450,7 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-4xl font-bold mb-4 text-center">{headingTitle}</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <input
             placeholder="رقم الطلب"
             className="border rounded px-4 py-3 text-lg"
@@ -476,22 +476,6 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
                 {cat}
               </option>
             ))}
-          </select>
-
-          <select
-            className="border rounded px-4 py-3 text-lg"
-            value={filters.status}
-            onChange={e => setFilters({ ...filters, status: e.target.value })}
-          >
-            <option value="">كل الحالات</option>
-            {mode === 'pending' ? (
-              <option value="pending">قيد الانتظار</option>
-            ) : (
-              <>
-                <option value="accepted">مقبول</option>
-                <option value="rejected">مرفوض</option>
-              </>
-            )}
           </select>
 
           <select
