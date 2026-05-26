@@ -836,10 +836,10 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
           {/* تقييم الخطر */}
           <div className="p-6 md:p-8 bg-gray-50 rounded-2xl space-y-6 border border-gray-100">
             <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-bold text-right">تقييم الخطر</h3>
               <div className="text-sm text-gray-500">
                 {selectedRisk ? 'تم جلب القيم من الخطر المختار' : 'يمكنك اختيار الفئة والخطر لاحقًا'}
               </div>
-              <h3 className="text-2xl font-bold text-right">تقييم الخطر</h3>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
