@@ -476,7 +476,7 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
 
       {/* Filter and Search Table */}
       <div className="bg-white rounded-[28px] p-6 shadow-sm border border-gray-100">
-        <div className="flex justify-end mb-6">
+        <div className="flex justify-start mb-6">
           <div className="relative w-full max-w-md">
             <input
               type="text"
