@@ -96,8 +96,7 @@ type TabKey =
   | 'cause'
   | 'responseAction'
   | 'preventiveAction'
-  | 'risk'
-  | 'role';
+  | 'risk';
 type SectionKey = 'strategicGoals' | 'causes' | 'responseActions' | 'preventiveActions';
 
 const emptyList: string[] = [];
@@ -149,10 +148,6 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
 
   const [preventiveActionForm, setPreventiveActionForm] = useState({
     actionDescription: ''
-  });
-
-  const [roleForm, setRoleForm] = useState({
-    roleName: ''
   });
 
   const [responsibleForm, setResponsibleForm] = useState({
@@ -516,48 +511,6 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
     }
   };
 
-  const handleCreateRole = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!roleForm.roleName.trim()) {
-      alert('الرجاء إدخال اسم المنصب الوظيفي');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(`${API_BASE}/role/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          roleName: roleForm.roleName.trim()
-        })
-      });
-
-      const result = await parseJsonSafe(response);
-
-      if (!response.ok) {
-        alert(result?.message || 'فشل إنشاء المنصب الوظيفي');
-        return;
-      }
-
-      setRoleForm({ roleName: '' });
-      alert(result?.message || 'تمت إضافة المنصب الوظيفي بنجاح');
-      if (!keepTabAfterCreate) {
-        setActiveTab('risk');
-      }
-    } catch (error) {
-      console.error('Error creating role:', error);
-      alert(`حدث خطأ أثناء إضافة المنصب الوظيفي: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleCreateResponsible = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -849,16 +802,36 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       return;
     }
 
-    const causeDtos = cleanList(causes).map(causeDescription => ({ causeDescription }));
+    const causeDtos = cleanList(causes).map(causeDescription => {
+      // Look up existing cause in catalog to avoid creating a duplicate
+      const existing = causesCatalog.find(
+        c => c.causeDescription?.trim().toLowerCase() === causeDescription.trim().toLowerCase()
+      );
+      return existing ? { id: existing.id } : { causeDescription };
+    });
     const actions = [
-      ...cleanList(responseActions).map(actionDescription => ({
-        actionDescription,
-        actionType: 1
-      })),
-      ...cleanList(preventiveActions).map(actionDescription => ({
-        actionDescription,
-        actionType: 0
-      }))
+      ...cleanList(responseActions).map(actionDescription => {
+        // Look up existing response action in catalog
+        const existing = actionsCatalog.find(
+          a =>
+            a.actionDescription?.trim().toLowerCase() === actionDescription.trim().toLowerCase() &&
+            (a.actionType === 1 || a.actionType === 'Reduction')
+        );
+        return existing
+          ? { id: existing.id, actionType: 1 }
+          : { actionDescription, actionType: 1 };
+      }),
+      ...cleanList(preventiveActions).map(actionDescription => {
+        // Look up existing preventive action in catalog
+        const existing = actionsCatalog.find(
+          a =>
+            a.actionDescription?.trim().toLowerCase() === actionDescription.trim().toLowerCase() &&
+            (a.actionType === 0 || a.actionType === 'Avoidance')
+        );
+        return existing
+          ? { id: existing.id, actionType: 0 }
+          : { actionDescription, actionType: 0 };
+      })
     ];
     const strategicGoalDtos = mapStrategicGoalLabelsToIds(
       cleanList(strategicGoals),
@@ -1170,58 +1143,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
                 إضافة إجراء وقائي
               </div>
             </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('role')}
-              className={`rounded-2xl p-5 text-lg font-bold transition ${
-                activeTab === 'role'
-                  ? 'bg-teal-600 text-white shadow'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <Users size={20} />
-                إضافة منصب وظيفي
-              </div>
-            </button>
           </div>
-        )}
-
-        {activeTab === 'role' && (
-          <form onSubmit={handleCreateRole} className="space-y-6">
-            <div className="bg-gray-50 rounded-2xl p-8 space-y-6">
-              <h3 className="text-2xl font-bold text-right">إضافة منصب وظيفي جديد</h3>
-
-              <div>
-                <label className="block mb-3 text-right font-semibold">اسم المنصب الوظيفي</label>
-                <input
-                  value={roleForm.roleName}
-                  onChange={(e) => setRoleForm({ roleName: e.target.value })}
-                  className="w-full px-4 py-4 border rounded-xl bg-white text-right"
-                  placeholder="مثال: Specialist"
-                />
-              </div>
-
-              <div className="flex gap-4 justify-start">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="px-8 py-4 bg-teal-600 text-white rounded-xl hover:bg-teal-700 disabled:opacity-60"
-                >
-                  حفظ المنصب الوظيفي
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onCancel}
-                  className="px-8 py-4 border rounded-xl"
-                >
-                  إلغاء
-                </button>
-              </div>
-            </div>
-          </form>
         )}
 
         {activeTab === 'category' && (

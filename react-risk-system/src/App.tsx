@@ -255,16 +255,6 @@ const DashboardLayout = () => {
               }
             />
 
-            <Route
-              path="/manage-role"
-              element={
-                role === 'admin' ? (
-                  <DataManagementPage type="role" />
-                ) : (
-                  <Navigate to="/" />
-                )
-              }
-            />
 
             <Route
               path="/manage-strategic-goal"

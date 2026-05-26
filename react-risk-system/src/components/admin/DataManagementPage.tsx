@@ -11,8 +11,7 @@ import {
   Users,
   AlertCircle,
   Siren,
-  ShieldCheck,
-  Briefcase
+  ShieldCheck
 } from 'lucide-react';
 import AddNewRisk from './AddNewRisk';
 import { API_BASE } from '../../api/http';
@@ -20,7 +19,6 @@ import { API_BASE } from '../../api/http';
 
 
 export type ManagementType =
-  | 'role'
   | 'strategicGoal'
   | 'risk'
   | 'department'
@@ -53,8 +51,7 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
   const [isRiskFormActive, setIsRiskFormActive] = useState(false);
   const [riskFormInitialData, setRiskFormInitialData] = useState<any>(null);
 
-  // Unified Form States for all other entities
-  const [roleForm, setRoleForm] = useState({ roleName: '' });
+
   const [categoryForm, setCategoryForm] = useState({ categoryName: '' });
   const [departmentForm, setDepartmentForm] = useState({ name: '' });
   const [strategicGoalForm, setStrategicGoalForm] = useState({ goalDescription: '' });
@@ -78,22 +75,7 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
   // Configure Entity Specific Settings
   const config = useMemo(() => {
     switch (type) {
-      case 'role':
-        return {
-          title: 'إدارة المناصب الوظيفية',
-          subtitle: 'إضافة وتعديل وحذف الأدوار والمناصب الوظيفية في النظام',
-          addButtonLabel: 'إضافة منصب وظيفي جديد',
-          searchPlaceholder: 'ابحث عن منصب وظيفي...',
-          icon: Briefcase,
-          fetchUrl: `${API_BASE}/role`,
-          createUrl: `${API_BASE}/role/create`,
-          deleteUrl: (item: CatalogItem) => `${API_BASE}/role/${item.name}`,
-          tableHeaders: ['الرقم المعرف', 'اسم المنصب الوظيفي'],
-          mapRow: (item: CatalogItem) => [item.id, item.name],
-          getEditPayload: () => ({ roleName: roleForm.roleName }),
-          getCreatePayload: () => ({ roleName: roleForm.roleName }),
-          setEditFormValues: (item: CatalogItem) => setRoleForm({ roleName: item.name })
-        };
+
       case 'strategicGoal':
         return {
           title: 'إدارة الغايات الاستراتيجية',
@@ -256,7 +238,6 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
     }
   }, [
     type,
-    roleForm,
     categoryForm,
     departmentForm,
     strategicGoalForm,
@@ -305,7 +286,6 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
       return;
     }
     // Reset specific forms
-    setRoleForm({ roleName: '' });
     setCategoryForm({ categoryName: '' });
     setDepartmentForm({ name: '' });
     setStrategicGoalForm({ goalDescription: '' });
@@ -559,7 +539,6 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
 
             <form onSubmit={(e) => handleSubmit(e, false)} className="p-6 space-y-4 overflow-y-auto">
               {renderFormFields(type, {
-                roleForm, setRoleForm,
                 categoryForm, setCategoryForm,
                 departmentForm, setDepartmentForm,
                 strategicGoalForm, setStrategicGoalForm,
@@ -613,7 +592,6 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
 
             <form onSubmit={(e) => handleSubmit(e, true)} className="p-6 space-y-4 overflow-y-auto">
               {renderFormFields(type, {
-                roleForm, setRoleForm,
                 categoryForm, setCategoryForm,
                 departmentForm, setDepartmentForm,
                 strategicGoalForm, setStrategicGoalForm,
@@ -653,20 +631,6 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
 // Render dynamic forms based on entity selection
 function renderFormFields(type: ManagementType, forms: any) {
   switch (type) {
-    case 'role':
-      return (
-        <div>
-          <label className="block text-right text-sm font-bold text-gray-700 mb-1">اسم الدور / المنصب الوظيفي *</label>
-          <input
-            type="text"
-            required
-            placeholder="مثال: Initiator"
-            value={forms.roleForm.roleName}
-            onChange={(e) => forms.setRoleForm({ roleName: e.target.value })}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-right focus:border-blue-500 focus:outline-none transition-colors"
-          />
-        </div>
-      );
     case 'strategicGoal':
       return (
         <div>

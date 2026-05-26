@@ -53,7 +53,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role }) => {
     () => (role === 'admin'
       ? [
           { id: 'manage-user', label: 'مستخدم', icon: Plus },
-          { id: 'manage-role', label: 'منصب وظيفي', icon: Plus },
           { id: 'manage-strategic-goal', label: 'غاية إستراتيجية', icon: Plus },
           { id: 'manage-risk', label: 'خطر', icon: Plus },
           { id: 'manage-department', label: 'قسم', icon: Plus },
