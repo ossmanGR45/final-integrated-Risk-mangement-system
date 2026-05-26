@@ -10,6 +10,7 @@ import {
   reviewerFromStatus,
   UiStatus,
 } from '../../utils/statusMapping';
+import Pagination from '../common/Pagination';
 
 // Shape returned by `/api/requests` (the backend Request entity).
 interface ApiRequest {
@@ -30,6 +31,9 @@ interface ApiRequest {
   userId?: number | null;
   responsibleId?: number | null;
   riskId?: number | null;
+  risk?: {
+    riskName?: string | null;
+  } | null;
   responsible?: {
     contactName?: string | null;
     entityName?: string | null;
@@ -100,7 +104,7 @@ const adapt = (r: ApiRequest): WorkflowRequest => {
     mode: r.occured ? 'after' : 'before',
     department: r.department || '',
     category: r.category || '',
-    name: r.description || '',
+    name: r.risk?.riskName || r.description || '',
     date: r.expectedTime ? String(r.expectedTime).slice(0, 10) : '',
     impact: r.impact || 1,
     likelihood: r.likelihood || 1,
@@ -132,6 +136,8 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
   const [rejectionReason, setRejectionReason] = useState('');
   const [evidenceInput, setEvidenceInput] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const [filters, setFilters] = useState({
     id: '',
@@ -181,7 +187,7 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
     try {
       setIsLoading(true);
       const pendingFlag = mode === 'pending' ? 'true' : 'false';
-      const url = `${API_BASE}/requests?pending=${pendingFlag}`;
+      const url = `${API_BASE}/requests?pending=${pendingFlag}&include=Risk`;
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -275,6 +281,17 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
 
     return sorted;
   }, [data, filters, sortBy]);
+
+  // Reset page when filters or sorting change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, sortBy]);
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return filteredData.slice(start, end);
+  }, [filteredData, currentPage, itemsPerPage]);
 
   const categories = Array.from(new Set(data.map(d => d.category).filter(Boolean)));
 
@@ -452,7 +469,11 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
   }
 
   const headingTitle =
-    mode === 'history' ? 'الطلبات التي تمت مراجعتها' : 'مخاطر تم طلب تسجيلها';
+    mode === 'history'
+      ? role === 'admin'
+        ? 'العمليات السابقة'
+        : 'الطلبات السابقة'
+      : 'مخاطر تم طلب تسجيلها';
 
   return (
     <div className="bg-white rounded-lg shadow-sm">
@@ -544,7 +565,7 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
           </thead>
 
           <tbody className="divide-y divide-gray-200">
-            {filteredData.map(req => {
+            {paginatedData.map(req => {
               const statusMeta = getStatusMeta(req);
 
               return (
@@ -574,6 +595,16 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
           </tbody>
         </table>
       </div>
+
+      {filteredData.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredData.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+        />
+      )}
 
       {filteredData.length === 0 && (
         <div className="p-10 text-center text-gray-500 text-lg">

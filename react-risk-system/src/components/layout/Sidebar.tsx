@@ -41,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role }) => {
     // سجلاتي = finished (Accepted + Rejected) requests for ALL roles.
     // The user sees only their own; managers see their team's; admins see all
     // (the backend already enforces this).
-    { id: 'records', label: 'الطلبات التي تمت مراجعتها', icon: FileText },
+    { id: 'records', label: role === 'admin' ? 'العمليات السابقة' : 'الطلبات السابقة', icon: FileText },
 
     // السجلات = system audit log. Admin-only.
     ...(role === 'admin'

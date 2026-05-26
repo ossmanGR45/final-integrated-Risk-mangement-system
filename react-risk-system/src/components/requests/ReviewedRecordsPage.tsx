@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { UserRole } from '../../types';
 import { uiStatusFromApi, UiStatus } from '../../utils/statusMapping';
 import { API_BASE } from '../../api/http';
+import Pagination from '../common/Pagination';
 
 // Unified row for the merged history list.
 interface ReviewedRow {
@@ -35,6 +36,8 @@ const statusLabel: Record<UiStatus, string> = {
 const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
   const [rows, setRows] = useState<ReviewedRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
   const [filters, setFilters] = useState({
     type: '',
     status: '',
@@ -42,33 +45,83 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
     user: '',
   });
 
+  const getUserIdFromToken = (token: string | null): string => {
+    if (!token) return '';
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        window.atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      const parsed = JSON.parse(jsonPayload);
+      return String(parsed.nameid || parsed.sub || '');
+    } catch (e) {
+      return '';
+    }
+  };
+
   const fetchAll = async () => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('authToken');
       const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+      const currentUserId = getUserIdFromToken(token);
 
-      // Both endpoints return only items the current user is allowed to see
-      // (initiator: own; manager: own + reports; admin: everything redirected).
-      const [reqRes, riskRes] = await Promise.all([
-        fetch(`${API_BASE}/requests?pending=false`, { headers }),
+      // Fetch requests, risks, and the specific user's audit logs to track actions
+      const [reqRes, riskRes, logsRes] = await Promise.all([
+        fetch(`${API_BASE}/requests?pending=false&include=Risk`, { headers }),
         fetch(`${API_BASE}/risk`, { headers }),
+        fetch(`${API_BASE}/logs/my`, { headers }),
       ]);
 
       const requests = reqRes.ok ? await reqRes.json() : [];
       const risks = riskRes.ok ? await riskRes.json() : [];
+      const auditLogs = logsRes.ok ? await logsRes.ok && logsRes.json() : [];
 
-      const reqRows: ReviewedRow[] = (Array.isArray(requests) ? requests : []).map((r: any) => ({
-        id: `req-${r.id}`,
-        type: 'logged' as const,
-        typeLabel: 'خطر مسجل',
-        name: r.description || '',
-        category: r.category || '',
-        date: r.expectedTime ? String(r.expectedTime).slice(0, 10) : '',
-        status: uiStatusFromApi(r.status),
-        rejectReason: r.rejectReason || undefined,
-        userId: r.userId !== undefined && r.userId !== null ? String(r.userId) : '',
-      }));
+      const touchedRequestIds = new Set<string>();
+      const touchedRiskIds = new Set<string>();
+
+      if (Array.isArray(auditLogs)) {
+        auditLogs.forEach((log: any) => {
+          if (log.primaryKey != null) {
+            const pkStr = String(log.primaryKey);
+            if (log.tableName === 'Request') {
+              touchedRequestIds.add(pkStr);
+            } else if (log.tableName === 'Risk') {
+              touchedRiskIds.add(pkStr);
+            }
+          }
+        });
+      }
+
+      const reqRows: ReviewedRow[] = (Array.isArray(requests) ? requests : [])
+        .map((r: any) => ({
+          id: `req-${r.id}`,
+          type: 'logged' as const,
+          typeLabel: 'خطر مسجل',
+          name: r.risk?.riskName || r.description || '',
+          category: r.category || '',
+          date: r.expectedTime ? String(r.expectedTime).slice(0, 10) : '',
+          status: uiStatusFromApi(r.status),
+          rejectReason: r.rejectReason || undefined,
+          userId: r.userId !== undefined && r.userId !== null ? String(r.userId) : '',
+        }))
+        .filter((row: ReviewedRow) => {
+          const reqId = row.id.replace('req-', '');
+          if (role === 'initiator') {
+            return row.userId === currentUserId;
+          } else if (role === 'manager') {
+            // Manager: only those he redirected or rejected
+            return touchedRequestIds.has(reqId);
+          } else if (role === 'admin') {
+            // Admin: only those he accepted or rejected
+            return touchedRequestIds.has(reqId);
+          }
+          return true;
+        });
 
       // Risks: only the *finished* ones (status 0=Rejected or 3=Accepted).
       const riskRows: ReviewedRow[] = (Array.isArray(risks) ? risks : [])
@@ -83,7 +136,20 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
           status: uiStatusFromApi(r.status),
           rejectReason: r.rejectReason || undefined,
           userId: r.userId !== undefined && r.userId !== null ? String(r.userId) : '',
-        }));
+        }))
+        .filter((row: ReviewedRow) => {
+          const riskId = row.id.replace('risk-', '');
+          if (role === 'initiator') {
+            return row.userId === currentUserId;
+          } else if (role === 'manager') {
+            // Manager: only those he or his team touched or redirected
+            return touchedRiskIds.has(riskId) || row.userId === currentUserId;
+          } else if (role === 'admin') {
+            // Admin: only those he accepted or rejected
+            return touchedRiskIds.has(riskId);
+          }
+          return true;
+        });
 
       setRows([...reqRows, ...riskRows]);
     } catch (err) {
@@ -108,6 +174,17 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
     );
   }, [rows, filters]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  const paginatedRows = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return filtered.slice(start, end);
+  }, [filtered, currentPage, itemsPerPage]);
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-12 text-center">
@@ -120,7 +197,9 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm">
       <div className="p-6 border-b border-gray-200">
-        <h2 className="text-4xl font-bold mb-4 text-center">الطلبات التي تمت مراجعتها</h2>
+        <h2 className="text-4xl font-bold mb-4 text-center">
+          {role === 'admin' ? 'العمليات السابقة' : 'الطلبات السابقة'}
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <input
@@ -174,7 +253,7 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filtered.map(row => (
+            {paginatedRows.map(row => (
               <tr key={row.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-center text-lg font-medium">{row.id}</td>
                 <td className="px-6 py-4 text-center text-lg font-medium">{row.userId || '—'}</td>
@@ -192,6 +271,16 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
           </tbody>
         </table>
       </div>
+
+      {filtered.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filtered.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+        />
+      )}
 
       {filtered.length === 0 && (
         <div className="p-10 text-center text-gray-500 text-lg">

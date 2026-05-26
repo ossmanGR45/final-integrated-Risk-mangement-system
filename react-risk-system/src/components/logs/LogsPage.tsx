@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { UserRole } from '../../types';
 import { API_BASE } from '../../api/http';
+import Pagination from '../common/Pagination';
 
 // What the backend actually returns from /api/logs and /api/logs/my.
 interface ApiAuditLog {
@@ -97,6 +98,8 @@ const LogsPage: React.FC<LogsPageProps> = ({ role }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const [filters, setFilters] = useState({
     searchUser: '',
@@ -173,6 +176,17 @@ const LogsPage: React.FC<LogsPageProps> = ({ role }) => {
 
     return sorted;
   }, [logs, filters, sortBy]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, sortBy]);
+
+  const paginatedLogs = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return filteredLogs.slice(start, end);
+  }, [filteredLogs, currentPage, itemsPerPage]);
 
   const allTypes = ['إضافة', 'تعديل', 'حذف'];
   const allTables = useMemo(
@@ -269,7 +283,7 @@ const LogsPage: React.FC<LogsPageProps> = ({ role }) => {
           </thead>
 
           <tbody className="divide-y divide-gray-200">
-            {filteredLogs.map(log => (
+            {paginatedLogs.map(log => (
               <tr key={log.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-center">
                   <button
@@ -292,6 +306,16 @@ const LogsPage: React.FC<LogsPageProps> = ({ role }) => {
           </tbody>
         </table>
       </div>
+
+      {filteredLogs.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredLogs.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+        />
+      )}
 
       {filteredLogs.length === 0 && (
         <div className="p-10 text-center text-gray-500 text-lg">
