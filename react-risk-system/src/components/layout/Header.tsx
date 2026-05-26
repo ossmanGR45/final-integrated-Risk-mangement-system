@@ -41,7 +41,7 @@ const NOTIFICATION_STATUS_LABEL: Record<number, string> = {
 };
 
 const REQUEST_TYPE_LABEL: Record<number, string> = {
-  0: 'مخاطرة',
+  0: 'خطر',
   1: 'طلب',
 };
 

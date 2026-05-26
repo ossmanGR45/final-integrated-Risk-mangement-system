@@ -798,7 +798,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       !riskForm.department.trim() ||
       !riskForm.location.trim()
     ) {
-      alert('الرجاء تعبئة الحقول الأساسية للمخاطرة');
+      alert('الرجاء تعبئة الحقول الأساسية للخطر');
       return;
     }
 
@@ -882,11 +882,11 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       const result = await parseJsonSafe(response);
 
       if (!response.ok) {
-        alert(formatApiError(result) || 'فشل حفظ المخاطرة');
+        alert(formatApiError(result) || 'فشل حفظ الخطر');
         return;
       }
 
-      alert(result?.message || 'تمت إضافة المخاطرة مباشرة إلى قاعدة البيانات');
+      alert(result?.message || 'تمت إضافة الخطر مباشرة إلى قاعدة البيانات');
 
       onSubmit?.(result?.data ?? payload);
 
@@ -912,7 +912,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       setSelectedStrategicGoalTemplate('');
     } catch (error) {
       console.error('Error creating risk:', error);
-      alert(`حدث خطأ أثناء إضافة المخاطرة: ${error instanceof Error ? error.message : String(error)}`);
+      alert(`حدث خطأ أثناء إضافة الخطر: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
     }
@@ -1025,7 +1025,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
         <div className="p-8 border-b border-gray-200">
           <h2 className="text-3xl font-bold text-right">إدارة بيانات المخاطر</h2>
           <p className="text-gray-600 mt-2 text-right">
-            من هنا يستطيع الأدمن إضافة فئة جديدة أو جهة مسؤولة أو مخاطرة جديدة مباشرة إلى قاعدة البيانات
+            من هنا يستطيع الأدمن إضافة فئة جديدة أو جهة مسؤولة أو خطر جديد مباشرة إلى قاعدة البيانات
           </p>
         </div>
       )}
@@ -1044,7 +1044,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
             >
               <div className="flex items-center justify-center gap-2">
                 <ShieldAlert size={20} />
-                إضافة مخاطرة
+                إضافة خطر
               </div>
             </button>
 
@@ -1431,7 +1431,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
         {activeTab === 'risk' && (
           <form onSubmit={handleCreateRisk} className="space-y-8">
             <div className="bg-gray-50 rounded-2xl p-8 space-y-8">
-              <h3 className="text-2xl font-bold text-right">إضافة مخاطرة جديدة</h3>
+              <h3 className="text-2xl font-bold text-right">إضافة خطر جديد</h3>
 
               
               {renderAccordionListSection(
@@ -1532,7 +1532,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
                       setRiskForm(prev => ({ ...prev, riskDescription: e.target.value }))
                     }
                     className="w-full px-4 py-4 border rounded-xl bg-white text-right"
-                    placeholder="وصف مختصر للمخاطرة"
+                    placeholder="وصف مختصر للخطر"
                   />
                 </div>
               </div>
@@ -1723,7 +1723,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
                   className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-60"
                 >
                   <Save size={18} />
-                  حفظ المخاطرة
+                  حفظ الخطر
                 </button>
 
                 <button

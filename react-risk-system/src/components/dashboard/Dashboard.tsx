@@ -426,7 +426,7 @@ const Dashboard: React.FC = () => {
     return Object.entries(deptMap).map(([dept, v]) => ({ dept, ...v }));
   }, [requests, allDepartments]);
 
-  // 7. Trend Data (half-year)
+  // 7. Trend Data (every 4 months)
   const trendData = useMemo(() => {
     const buckets: Record<string, { submitted: number; accepted: number; rejected: number }> = {};
     requests.forEach((r: any) => {
@@ -434,8 +434,11 @@ const Dashboard: React.FC = () => {
       if (!raw) return;
       const d = new Date(raw);
       if (isNaN(d.getTime())) return;
-      const half = d.getMonth() < 6 ? 'H1' : 'H2';
-      const key = `${half} ${d.getFullYear()}`;
+      const month = d.getMonth();
+      let term = 'T1';
+      if (month >= 4 && month < 8) term = 'T2';
+      else if (month >= 8) term = 'T3';
+      const key = `${term} ${d.getFullYear()}`;
       if (!buckets[key]) buckets[key] = { submitted: 0, accepted: 0, rejected: 0 };
       buckets[key].submitted++;
       if (r.status === 'accepted') buckets[key].accepted++;
@@ -443,29 +446,31 @@ const Dashboard: React.FC = () => {
     });
     return Object.entries(buckets)
       .sort(([a], [b]) => {
-        const [ha, ya] = a.split(' ');
-        const [hb, yb] = b.split(' ');
-        const va = Number(ya) * 2 + (ha === 'H2' ? 1 : 0);
-        const vb = Number(yb) * 2 + (hb === 'H2' ? 1 : 0);
+        const [ta, ya] = a.split(' ');
+        const [tb, yb] = b.split(' ');
+        const va = Number(ya) * 3 + (ta === 'T3' ? 2 : ta === 'T2' ? 1 : 0);
+        const vb = Number(yb) * 3 + (tb === 'T3' ? 2 : tb === 'T2' ? 1 : 0);
         return va - vb;
       })
       .map(([period, v]) => ({ period, ...v }));
   }, [requests]);
 
-  // Helper to format English half-year period to Arabic
+  // Helper to format English period to Arabic (every 4 months)
   const formatPeriodLabel = (period: string) => {
-    const [half, year] = period.split(' ');
-    const halfLabel = half === 'H1' ? 'النصف الأول' : 'النصف الثاني';
-    return `${halfLabel} من ${year}`;
+    const [term, year] = period.split(' ');
+    let termLabel = 'الفصل الأول (١ - ٤)';
+    if (term === 'T2') termLabel = 'الفصل الثاني (٥ - ٨)';
+    else if (term === 'T3') termLabel = 'الفصل الثالث (٩ - ١٢)';
+    return `${termLabel} من ${year}`;
   };
 
-  // KPI delta: compare current half-year to previous half-year (or 6 months ago/year ago)
+  // KPI delta: compare current period to previous period (every 4 months)
   const kpiDelta = useMemo(() => {
     if (requests.length === 0) return null;
 
     // Find the latest period in the requests
     let latestYear = 0;
-    let latestHalf = 'H1';
+    let latestTerm = 'T1';
 
     requests.forEach((r: any) => {
       const raw = r.year || r.Year || r.date;
@@ -473,33 +478,41 @@ const Dashboard: React.FC = () => {
       const d = new Date(raw);
       if (isNaN(d.getTime())) return;
       const y = d.getFullYear();
-      const h = d.getMonth() < 6 ? 'H1' : 'H2';
+      const month = d.getMonth();
+      let t = 'T1';
+      if (month >= 4 && month < 8) t = 'T2';
+      else if (month >= 8) t = 'T3';
 
       if (y > latestYear) {
         latestYear = y;
-        latestHalf = h;
+        latestTerm = t;
       } else if (y === latestYear) {
-        if (h === 'H2' && latestHalf === 'H1') {
-          latestHalf = 'H2';
+        const val = t === 'T3' ? 2 : t === 'T2' ? 1 : 0;
+        const latVal = latestTerm === 'T3' ? 2 : latestTerm === 'T2' ? 1 : 0;
+        if (val > latVal) {
+          latestTerm = t;
         }
       }
     });
 
     if (latestYear === 0) return null;
 
-    const currentPeriod = `${latestHalf} ${latestYear}`;
+    const currentPeriod = `${latestTerm} ${latestYear}`;
 
-    // Previous period is 6 months ago (the half-year before latest)
-    let prevHalf = '';
+    // Previous period is the term before latest (4 months ago)
+    let prevTerm = '';
     let prevYear: number;
-    if (latestHalf === 'H2') {
-      prevHalf = 'H1';
+    if (latestTerm === 'T3') {
+      prevTerm = 'T2';
+      prevYear = latestYear;
+    } else if (latestTerm === 'T2') {
+      prevTerm = 'T1';
       prevYear = latestYear;
     } else {
-      prevHalf = 'H2';
+      prevTerm = 'T3';
       prevYear = latestYear - 1;
     }
-    const prevPeriod = `${prevHalf} ${prevYear}`;
+    const prevPeriod = `${prevTerm} ${prevYear}`;
 
     // Count requests in current and previous periods
     let currCount = 0;
@@ -511,8 +524,11 @@ const Dashboard: React.FC = () => {
       const d = new Date(raw);
       if (isNaN(d.getTime())) return;
       const y = d.getFullYear();
-      const h = d.getMonth() < 6 ? 'H1' : 'H2';
-      const periodKey = `${h} ${y}`;
+      const month = d.getMonth();
+      let t = 'T1';
+      if (month >= 4 && month < 8) t = 'T2';
+      else if (month >= 8) t = 'T3';
+      const periodKey = `${t} ${y}`;
 
       if (periodKey === currentPeriod) {
         currCount++;
@@ -649,7 +665,7 @@ const Dashboard: React.FC = () => {
                     <Sparkles size={18} />
                   </div>
                   <h2 className="text-2xl md:text-3xl font-black">الغايات الإستراتيجية</h2>
-                  <p className="text-blue-100 mt-2 text-sm md:text-base">كبسة واحدة تعرض كل الغايات الإستراتيجية المرتبطة بالمخاطر المسجلة</p>
+                  <p className="text-blue-100 mt-2 text-sm md:text-base">انقر لعرض الغايات الإستراتيجية والأخطار الواقعة عليها</p>
                 </div>
                 <div className={`flex items-center gap-3 transition-transform ${showGoals ? 'rotate-180' : ''}`}>
                   <ChevronDown size={26} />
@@ -779,7 +795,7 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 3. Incidents by Status */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold text-right mb-1">الحوادث حسب الحالة</h3>
+            <h3 className="text-xl font-bold text-right mb-1">البلاغات حسب الحالة</h3>
             <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Incidents by Status</p>
             {risksByStatus.length === 0 ? (
               <div className="text-center py-12 text-gray-400">لا توجد بيانات</div>
@@ -810,8 +826,8 @@ const Dashboard: React.FC = () => {
 
           {/* 4. Mitigation Type Split */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold text-right mb-1">أنواع الإجراءات التخفيفية</h3>
-            <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Mitigation Type Split</p>
+            <h3 className="text-xl font-bold text-right mb-1">الإجراءات للتعامل مع الخطر</h3>
+            <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>actions to deal with the incident</p>
             {mitigationTotal === 0 ? (
               <div className="text-center py-12 text-gray-400">لا توجد بيانات</div>
             ) : (
@@ -847,7 +863,7 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* 5. Incident Count by Category */}
           <div className="lg:col-span-3 bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold text-right mb-1">الحوادث حسب الفئة</h3>
+            <h3 className="text-xl font-bold text-right mb-1">البلاغات حسب الفئة</h3>
             <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Incidents by Category</p>
             {risksByCategory.length === 0 ? (
               <div className="text-center py-12 text-gray-400">لا توجد بيانات</div>
@@ -870,7 +886,7 @@ const Dashboard: React.FC = () => {
 
           {/* 6. Dept Risk Profile */}
           <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold text-right mb-1">ملف الأقسام</h3>
+            <h3 className="text-xl font-bold text-right mb-1">البلاغات حسب الأقسام</h3>
             <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Dept Risk Profile</p>
             {deptProfile.length === 0 ? (
               <div className="text-center py-12 text-gray-400">لا توجد بيانات</div>
@@ -893,8 +909,8 @@ const Dashboard: React.FC = () => {
 
         {/* 7. Risk Submission Trend */}
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-xl font-bold text-right mb-1">اتجاه تقديم المخاطر (كل نصف سنة)</h3>
-          <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Risk Submission Trend — Semi-Annual</p>
+          <h3 className="text-xl font-bold text-right mb-1">البلاغات/الزمن (كل فصل)</h3>
+          <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Risk Submission Trend — Every 4 Months</p>
           {trendData.length === 0 ? (
             <div className="text-center py-12 text-gray-400">لا توجد بيانات كافية</div>
           ) : (
@@ -973,13 +989,15 @@ const Dashboard: React.FC = () => {
 
         {/* 8. Risk Likelihood × Impact Matrix */}
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-xl font-bold text-right mb-1">مصفوفة الاحتمالية × التأثير</h3>
+          <h3 className="text-xl font-bold text-right mb-1">مصفوفة الاحتمالية × شدة أثر الخطر</h3>
           <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Risk Likelihood × Impact Matrix</p>
           <div className="flex gap-8 flex-wrap">
             {/* Grid */}
-            <div className="flex gap-3 items-end">
+            <div className="flex gap-3">
               {/* Y label */}
-              <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[10px] text-gray-400 pb-7 tracking-wider">الاحتمالية</div>
+              <div className="flex flex-col items-center justify-center" style={{ height: '276px' }}>
+                <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[10px] text-gray-400 tracking-wider">الاحتمالية</div>
+              </div>
               <div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 52px)', gap: 4 }}>
                   {[5, 4, 3, 2, 1].map(l =>
@@ -1019,7 +1037,7 @@ const Dashboard: React.FC = () => {
                     <div key={v} className="text-center text-[10px] text-gray-400" style={{ width: 52, fontFamily: 'monospace' }}>{v}</div>
                   ))}
                 </div>
-                <div className="text-center text-[10px] text-gray-400 mt-1 tracking-wider">التأثير ←</div>
+                <div className="text-center text-[10px] text-gray-400 mt-1 tracking-wider">شدة أثر الخطر ←</div>
               </div>
             </div>
 
@@ -1081,7 +1099,6 @@ const Dashboard: React.FC = () => {
         {/* Reports Footer */}
         <div className="border-t border-gray-200 pt-4 mt-2 flex justify-between text-xs text-gray-400" style={{ fontFamily: 'monospace' }}>
           <span>Risk Management & Incident Tracking System</span>
-          <span>Generated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
         </div>
 
       </div>

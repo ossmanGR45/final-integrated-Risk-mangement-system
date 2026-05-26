@@ -96,13 +96,13 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
         return {
           title: 'إدارة سجل المخاطر القياسية',
           subtitle: 'إضافة وتعديل وحذف المخاطر المعتمدة في النظام',
-          addButtonLabel: 'إضافة مخاطرة قياسية جديدة',
-          searchPlaceholder: 'ابحث عن مخاطرة باسمها أو قسمها...',
+          addButtonLabel: 'إضافة خطر قياسي جديد',
+          searchPlaceholder: 'ابحث عن خطر باسمه أو قسمه...',
           icon: AlertCircle,
           fetchUrl: `${API_BASE}/risk?custom=false&include=RiskActions.Action,RiskCauses.Cause,RiskGoals.StrategicGoal`,
           createUrl: `${API_BASE}/risk/addUpdate`,
           deleteUrl: (item: CatalogItem) => `${API_BASE}/risk/${item.id}`,
-          tableHeaders: ['الرقم', 'اسم المخاطرة', 'القسم', 'الموقع', 'فئة الخطر', 'الاحتمالية', 'الأثر'],
+          tableHeaders: ['الرقم', 'اسم الخطر', 'القسم', 'الموقع', 'فئة الخطر', 'الاحتمالية', 'الأثر'],
           mapRow: (item: CatalogItem) => [
             item.id,
             item.riskName,
@@ -390,9 +390,9 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
           <div className="text-right">
             <h1 className="text-2xl font-black text-gray-900">
-              {riskFormInitialData ? 'تعديل مخاطرة معتمدة' : 'إضافة مخاطرة معتمدة جديدة'}
+              {riskFormInitialData ? 'تعديل خطر معتمد' : 'إضافة خطر معتمد جديد'}
             </h1>
-            <p className="text-gray-500 mt-1">قم بتحديث تفاصيل وبنية المخاطرة وسيقوم النظام بتحديث المرجع القياسي مباشرة</p>
+            <p className="text-gray-500 mt-1">قم بتحديث تفاصيل وبنية الخطر وسيقوم النظام بتحديث المرجع القياسي مباشرة</p>
           </div>
           <button
             type="button"

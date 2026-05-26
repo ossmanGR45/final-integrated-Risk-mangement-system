@@ -378,7 +378,7 @@ export const handlers = [
     return HttpResponse.json(
       {
         success: true,
-        message: 'تمت إضافة المخاطرة إلى قاعدة البيانات',
+        message: 'تمت إضافة الخطر إلى قاعدة البيانات',
         data: enrichRiskStrategicGoals(newRisk)
       },
       { status: 201 }

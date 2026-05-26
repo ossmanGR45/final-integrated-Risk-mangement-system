@@ -392,7 +392,7 @@ const RiskInquiryPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="bg-white rounded-2xl shadow-sm p-8">
-          <h1 className="text-4xl font-bold text-right mb-2">استفسار المخاطر</h1>
+          <h1 className="text-4xl font-bold text-right mb-2">دليل المخاطر</h1>
           <p className="text-gray-600 text-right text-lg">
             استعرض الفئات والمخاطر المسجلة في النظام
           </p>
@@ -443,7 +443,7 @@ const RiskInquiryPage: React.FC = () => {
                         isSelected ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
                       }`}
                     >
-                      {risksCount} مخاطرة
+                      {risksCount} خطر
                     </div>
                   </div>
 
@@ -476,7 +476,7 @@ const RiskInquiryPage: React.FC = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder="ابحث عن مخاطرة..."
+              placeholder="ابحث عن خطر..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-6 py-4 pr-12 rounded-xl border border-gray-300 text-right text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

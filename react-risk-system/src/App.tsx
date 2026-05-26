@@ -118,7 +118,7 @@ const DashboardLayout = () => {
             <Route path="/" element={<Dashboard key={role} />} />
 
             {/*
-              تسجيل خطر  →  posts to /api/requests/addUpdate.
+              الإبلاغ عن خطر  →  posts to /api/requests/addUpdate.
               The Request stays in the "pending" list (Status=InProgress) until
               a manager forwards it (underReview) or rejects it (Rejected),
               and an admin accepts (Accepted) or rejects (Rejected).
@@ -128,7 +128,7 @@ const DashboardLayout = () => {
               element={
                 role === 'initiator' ? (
                   <NewRequestForm
-                    title="تسجيل خطر"
+                    title="الإبلاغ عن خطر"
                     submitLabel="حفظ وإرسال"
                     onSubmit={async (data) => {
                       const requestPayload = {
@@ -220,7 +220,7 @@ const DashboardLayout = () => {
             />
 
             {/*
-              مقترح خطر جديد  →  posts to /api/risk/addUpdate with Custom=true
+              إقتراح خطر جديد  →  posts to /api/risk/addUpdate with Custom=true
               (the backend forces this for non-admin creators). Lives in the
               Risks table as a *suggestion*, surfaced in the
               "مخاطر تقترح اضافتها" tab until accepted by an admin.

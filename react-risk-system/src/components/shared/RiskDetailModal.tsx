@@ -103,7 +103,7 @@ th{background-color:#f5f5f5;font-weight:bold;text-align:center}.section-header{b
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[200] p-4">
       <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between z-10">
-          <h2 className="text-2xl font-bold text-right">تفاصيل المخاطرة</h2>
+          <h2 className="text-2xl font-bold text-right">تفاصيل الخطر</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors"><X size={24} /></button>
         </div>
 
@@ -146,7 +146,7 @@ th{background-color:#f5f5f5;font-weight:bold;text-align:center}.section-header{b
                   </p>
                 ))
               ) : (
-                <p className="text-gray-500 text-lg">لا توجد غايات إستراتيجية مرتبطة بهذه المخاطرة</p>
+                <p className="text-gray-500 text-lg">لا توجد غايات إستراتيجية مرتبطة بهذا الخطر</p>
               )}
             </div>
           </div>
@@ -179,13 +179,13 @@ th{background-color:#f5f5f5;font-weight:bold;text-align:center}.section-header{b
           </div>
 
           <div className="bg-gray-50 rounded-xl p-6">
-            <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-start gap-2"><AlertCircle size={20} />وصف المخاطرة</h4>
+            <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-start gap-2"><AlertCircle size={20} />وصف الخطر</h4>
             <p className="text-gray-700 text-right leading-relaxed">{risk.riskDescription}</p>
           </div>
 
-          {renderListSection('الأسباب المحتملة لحدوث الخطر', toArray(risk.riskCauses), <AlertCircle size={20} />, 'لا توجد أسباب مسجلة لهذه المخاطرة')}
+          {renderListSection('الأسباب المحتملة لحدوث الخطر', toArray(risk.riskCauses), <AlertCircle size={20} />, 'لا توجد أسباب مسجلة لهذا الخطر')}
           {renderListSection('الإجراءات التي تتخذها الجهة المسؤولة عند وقوع الخطر', toArray(risk.riskActions), <Siren size={20} />, 'لا توجد إجراءات مسجلة عند وقوع الخطر')}
-          {renderListSection('الإجراءات الواجب اتباعها لتفادي حدوث تلك المخاطر', toArray(risk.riskGoals), <ShieldCheck size={20} />, 'لا توجد إجراءات وقائية مسجلة لهذه المخاطرة')}
+          {renderListSection('الإجراءات الواجب اتباعها لتفادي حدوث تلك المخاطر', toArray(risk.riskGoals), <ShieldCheck size={20} />, 'لا توجد إجراءات وقائية مسجلة لهذا الخطر')}
 
           {responsible && (
             <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">

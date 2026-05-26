@@ -149,7 +149,7 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
   onCancel,
   initialData,
   disabled = false,
-  title = 'تسجيل خطر',
+  title = 'الإبلاغ عن خطر',
   submitLabel = 'حفظ وإرسال'
 }) => {
   const [mode, setMode] = useState<RiskMode>('before');
@@ -641,7 +641,7 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
     e.preventDefault();
 
     if (!strategicGoal) {
-      alert('الرجاء اختيار الغاية الاستراتيجية للمخاطرة');
+      alert('الرجاء اختيار الغاية الاستراتيجية للخطر');
       return;
     }
 

@@ -150,7 +150,16 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
 
       const data = await parseJsonSafe(response);
       const apiList: ApiRisk[] = Array.isArray(data) ? data : [];
-      setProposals(apiList.map(adapt));
+
+      // Only show pending suggestions here (manager_review or admin_review).
+      // • Rejected risks stay custom=true (backend doesn't flip the flag on rejection),
+      //   so without this filter they would remain in this list after being rejected.
+      // • Accepted risks become custom=false and won't appear via ?custom=true anyway.
+      // Finished items (rejected / accepted) should only appear in الطلبات السابقة.
+      const pendingOnly = apiList.filter(
+        (r: ApiRisk) => r.status !== 0 && r.status !== 3,
+      );
+      setProposals(pendingOnly.map(adapt));
     } catch (error) {
       console.error('Error fetching proposals:', error);
       setProposals([]);

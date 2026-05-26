@@ -26,16 +26,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role }) => {
 
   const menuItems = [
     { id: 'dashboard', label: 'لوحة المعلومات', icon: Home },
-    { id: 'risk-inquiry', label: 'استفسار المخاطر', icon: Search },
+    { id: 'risk-inquiry', label: 'دليل المخاطر', icon: Search },
 
     ...(role === 'initiator'
-      ? [{ id: 'new-request', label: 'تسجيل خطر', icon: CheckSquare }]
+      ? [{ id: 'new-request', label: 'الإبلاغ عن خطر', icon: CheckSquare }]
       : []),
 
     { id: 'requests', label: 'قائمة الطلبات', icon: FileText },
 
     ...(role === 'initiator'
-      ? [{ id: 'predefined', label: 'مقترح خطر جديد', icon: Plus }]
+      ? [{ id: 'predefined', label: 'إقتراح خطر جديد', icon: Plus }]
       : []),
 
     // سجلاتي = finished (Accepted + Rejected) requests for ALL roles.
