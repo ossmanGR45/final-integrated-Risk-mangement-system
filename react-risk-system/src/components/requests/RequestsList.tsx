@@ -233,11 +233,20 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
 
   const filteredData = useMemo(() => {
     const result = data.filter(req => {
+      let matchesStatus = true;
+      if (filters.status === 'waiting_admin') {
+        matchesStatus = req.status === 'pending' && req.currentReviewerRole === 'admin';
+      } else if (filters.status === 'waiting_manager') {
+        matchesStatus = req.status === 'pending' && req.currentReviewerRole === 'manager';
+      } else if (filters.status) {
+        matchesStatus = req.status === (filters.status as UiStatus);
+      }
+
       return (
         (!filters.id || req.id.toLowerCase().includes(filters.id.toLowerCase())) &&
         (!filters.name || req.name.toLowerCase().includes(filters.name.toLowerCase())) &&
         (!filters.category || req.category === filters.category) &&
-        (!filters.status || req.status === (filters.status as UiStatus))
+        matchesStatus
       );
     });
 
@@ -450,7 +459,7 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-4xl font-bold mb-4 text-center">{headingTitle}</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <input
             placeholder="رقم الطلب"
             className="border rounded px-4 py-3 text-lg"
@@ -477,6 +486,28 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
               </option>
             ))}
           </select>
+
+          {mode === 'history' ? (
+            <select
+              className="border rounded px-4 py-3 text-lg"
+              value={filters.status}
+              onChange={e => setFilters({ ...filters, status: e.target.value })}
+            >
+              <option value="">كل الحالات</option>
+              <option value="accepted">مقبول</option>
+              <option value="rejected">مرفوض</option>
+            </select>
+          ) : (
+            <select
+              className="border rounded px-4 py-3 text-lg"
+              value={filters.status}
+              onChange={e => setFilters({ ...filters, status: e.target.value })}
+            >
+              <option value="">كل الحالات</option>
+              <option value="waiting_admin">بانتظار الأدمن</option>
+              <option value="waiting_manager">بانتظار المدير</option>
+            </select>
+          )}
 
           <select
             className="border rounded px-4 py-3 text-lg"

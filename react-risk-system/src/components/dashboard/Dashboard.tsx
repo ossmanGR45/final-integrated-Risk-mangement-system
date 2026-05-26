@@ -201,10 +201,19 @@ const Dashboard: React.FC = () => {
           return { ...r, status: statusStr };
         });
 
-        const mappedGoals = (Array.isArray(goalsData) ? goalsData : []).map((g: any) => ({
-          id: g.id,
-          title: g.goalDescription || g.name || g.title || ''
-        })).filter(g => g.title);
+        const mappedGoals = (Array.isArray(goalsData) ? goalsData : [])
+          .map((g: any) => ({
+            id: g.id,
+            title: g.goalDescription || g.name || g.title || ''
+          }))
+          .filter(g => g.title)
+          .filter(g => {
+            const titleLower = g.title.toLowerCase();
+            return !titleLower.includes('اجراء') &&
+              !titleLower.includes('إجراء') &&
+              !titleLower.includes('وقائي') &&
+              !titleLower.includes('وقائية');
+          });
 
         setRequests(mapped);
         const risksArr = Array.isArray(risksData) ? risksData : [];
@@ -274,6 +283,13 @@ const Dashboard: React.FC = () => {
     });
 
     return Array.from(goalsMap.values())
+      .filter(g => {
+        const titleLower = g.title.toLowerCase();
+        return !titleLower.includes('اجراء') &&
+          !titleLower.includes('إجراء') &&
+          !titleLower.includes('وقائي') &&
+          !titleLower.includes('وقائية');
+      })
       .sort((a, b) => b.count !== a.count ? b.count - a.count : a.title.localeCompare(b.title, 'ar'));
   }, [risks, allStrategicGoals]);
 
@@ -622,11 +638,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 ) : (
                   <>
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="text-right">
-                        <h3 className="text-2xl font-black text-gray-900">جميع الغايات الإستراتيجية</h3>
-                        <p className="text-gray-500 mt-1">مرتبة بشكل جميل وواضح لسهولة الاستعراض</p>
-                      </div>
+                    <div className="flex items-center justify-start mb-6">
                       <div className="hidden md:flex items-center gap-2">
                         <span className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-sm font-bold">اكبس على أي غاية لعرض الأخطار المرتبطة بها</span>
                       </div>

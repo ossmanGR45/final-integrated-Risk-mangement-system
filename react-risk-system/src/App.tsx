@@ -196,6 +196,28 @@ const DashboardLayout = () => {
               element={<RequestsListWithTabs requests={[]} role={role} />}
             />
 
+            <Route
+              path="/add-new-risk"
+              element={
+                role === 'admin' ? (
+                  <AddNewRisk
+                    initialData={addNewRiskInitialData || undefined}
+                    hideTabs={true}
+                    onCancel={() => {
+                      clearAddNewRiskState();
+                      navigate('/requests');
+                    }}
+                    onSubmit={() => {
+                      clearAddNewRiskState();
+                      navigate('/requests');
+                    }}
+                  />
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
+
             {/*
               مقترح خطر جديد  →  posts to /api/risk/addUpdate with Custom=true
               (the backend forces this for non-admin creators). Lives in the
