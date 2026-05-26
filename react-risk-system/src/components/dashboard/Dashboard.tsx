@@ -147,7 +147,7 @@ const normalizeRisk = (risk: RawRisk): RiskFull => {
     department: String(risk.department ?? ''),
     riskCauses: directCauses.length > 0 ? directCauses : mappedCauses,
     riskActions: directActions.length > 0 ? directActions : mappedActions,
-    riskGoals: directGoals.length > 0 ? directGoals : mappedByType.avoidance,
+    riskGoals: directGoals.length > 0 ? directGoals : mappedGoals,
     strategicGoals:
       directStrategicGoals.length > 0
         ? directStrategicGoals
@@ -168,6 +168,9 @@ const Dashboard: React.FC = () => {
   const [selectedRisk, setSelectedRisk] = useState<RiskFull | null>(null);
   const [rawRisksData, setRawRisksData] = useState<RawRisk[]>([]);
   const [heatmapHover, setHeatmapHover] = useState<[number, number, number] | null>(null);
+  const [allActions, setAllActions] = useState<any[]>([]);
+  const [allCategories, setAllCategories] = useState<any[]>([]);
+  const [allDepartments, setAllDepartments] = useState<any[]>([]);
 
   const parseJsonSafe = async (response: Response) => {
     const text = await response.text();
@@ -181,17 +184,23 @@ const Dashboard: React.FC = () => {
       try {
         const token = localStorage.getItem('authToken');
         const authHeaders: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
-        const [requestsRes, risksRes, respRes, goalsRes] = await Promise.all([
+        const [requestsRes, risksRes, respRes, goalsRes, actionsRes, categoryRes, departmentsRes] = await Promise.all([
           fetch(`${API_BASE}/requests`, { headers: authHeaders }),
           fetch(`${API_BASE}/risk?include=RiskActions.Action,RiskCauses.Cause,RiskGoals.StrategicGoal`, { headers: authHeaders }),
           fetch(`${API_BASE}/responsible`, { headers: authHeaders }),
           fetch(`${API_BASE}/strategicgoal`, { headers: authHeaders }),
+          fetch(`${API_BASE}/action`, { headers: authHeaders }),
+          fetch(`${API_BASE}/category`, { headers: authHeaders }),
+          fetch(`${API_BASE}/departments`, { headers: authHeaders }),
         ]);
 
         const requestsData = await parseJsonSafe(requestsRes);
         const risksData = await parseJsonSafe(risksRes);
         const respData = await parseJsonSafe(respRes);
         const goalsData = await parseJsonSafe(goalsRes);
+        const actionsData = await parseJsonSafe(actionsRes);
+        const categoryData = await parseJsonSafe(categoryRes);
+        const departmentsData = await parseJsonSafe(departmentsRes);
 
         const mapped = (Array.isArray(requestsData) ? requestsData : []).map((r: any) => {
           let statusStr: 'pending' | 'accepted' | 'rejected' | 'closed' = 'pending';
@@ -221,6 +230,9 @@ const Dashboard: React.FC = () => {
         setRisks(risksArr.map(normalizeRisk));
         setResponsibleEntities(Array.isArray(respData) ? respData : []);
         setAllStrategicGoals(mappedGoals);
+        setAllActions(Array.isArray(actionsData) ? actionsData : []);
+        setAllCategories(Array.isArray(categoryData) ? categoryData : []);
+        setAllDepartments(Array.isArray(departmentsData) ? departmentsData : []);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
         setRequests([]);
@@ -358,50 +370,61 @@ const Dashboard: React.FC = () => {
   const mitigationSplit = useMemo(() => {
     let reduction = 0;
     let avoidance = 0;
-    rawRisksData.forEach(r => {
-      const rawActions = r.riskActions ?? r.riskactions ?? r.RiskActions;
-      if (!Array.isArray(rawActions)) return;
-      rawActions.forEach((item: any) => {
-        if (!item || typeof item !== 'object') return;
-        const action = item.action ?? item.Action;
-        if (!action) return;
-        const t = action.actionType ?? action.ActionType;
-        if (t === 0 || t === '0' || t === 'Avoidance') avoidance++;
-        else reduction++;
-      });
+    allActions.forEach((item: any) => {
+      const t = item.actionType ?? item.ActionType;
+      if (t === 0 || t === '0' || t === 'Avoidance') avoidance++;
+      else if (t === 1 || t === '1' || t === 'Reduction') reduction++;
     });
     return [
       { name: 'تخفيض', value: reduction, color: CHART_COLORS.indigo },
       { name: 'تجنب', value: avoidance, color: CHART_COLORS.pink },
     ];
-  }, [rawRisksData]);
+  }, [allActions]);
 
   const mitigationTotal = mitigationSplit[0].value + mitigationSplit[1].value;
 
-  // 5. Incident Count by Category (uses RiskRequest data)
+  // 5. Incident Count by Category (uses Category API + requests)
   const risksByCategory = useMemo(() => {
     const counts: Record<string, number> = {};
+    
+    // Initialize count for all known categories
+    allCategories.forEach((c: any) => {
+      const name = c.categoryName || c.name || '';
+      if (name.trim()) counts[name.trim()] = 0;
+    });
+
+    // Populate counts from requests
     requests.forEach((r: any) => {
-      const cat = r.category || r.Category || 'غير مصنف';
+      const cat = (r.category || r.Category || 'غير مصنف').trim();
       counts[cat] = (counts[cat] || 0) + 1;
     });
+
     return Object.entries(counts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
-  }, [requests]);
+  }, [requests, allCategories]);
 
   const CATEGORY_COLORS = ['#6366f1', '#8b5cf6', '#3b82f6', '#0ea5e9', '#22d3ee', '#14b8a6', '#f59e0b', '#ef4444'];
 
-  // 6. Dept Profile (incidents only, from RiskRequest)
+  // 6. Dept Profile (uses Departments API + requests)
   const deptProfile = useMemo(() => {
     const deptMap: Record<string, { incidents: number }> = {};
+    
+    // Initialize count for all known departments
+    allDepartments.forEach((d: any) => {
+      const name = d.name || '';
+      if (name.trim()) deptMap[name.trim()] = { incidents: 0 };
+    });
+
+    // Populate counts from requests
     requests.forEach((r: any) => {
-      const d = r.department || r.Department || 'غير محدد';
+      const d = (r.department || r.Department || 'غير محدد').trim();
       if (!deptMap[d]) deptMap[d] = { incidents: 0 };
       deptMap[d].incidents++;
     });
+
     return Object.entries(deptMap).map(([dept, v]) => ({ dept, ...v }));
-  }, [requests]);
+  }, [requests, allDepartments]);
 
   // 7. Trend Data (half-year)
   const trendData = useMemo(() => {
@@ -829,17 +852,19 @@ const Dashboard: React.FC = () => {
             {risksByCategory.length === 0 ? (
               <div className="text-center py-12 text-gray-400">لا توجد بيانات</div>
             ) : (
-              <ResponsiveContainer width="100%" height={Math.max(200, risksByCategory.length * 46)}>
-                <BarChart data={risksByCategory} layout="vertical" barSize={22} margin={{ right: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                  <XAxis type="number" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" width={130} tick={{ fill: '#4b5563', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f3f4f610' }} />
-                  <Bar dataKey="count" name="عدد الحوادث" radius={[0, 8, 8, 0]}>
-                    {risksByCategory.map((_, i) => <Cell key={i} fill={CATEGORY_COLORS[i % CATEGORY_COLORS.length]} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ direction: 'ltr' }}>
+                <ResponsiveContainer width="100%" height={Math.max(200, risksByCategory.length * 46)}>
+                  <BarChart data={risksByCategory} layout="vertical" barSize={22} margin={{ left: 30, right: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                    <XAxis type="number" reversed={true} tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <YAxis type="category" dataKey="name" width={130} orientation="right" tick={{ fill: '#4b5563', fontSize: 12, textAnchor: 'end', dx: 110 }} axisLine={false} tickLine={false} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f3f4f610' }} />
+                    <Bar dataKey="count" name="عدد الحوادث" radius={[0, 8, 8, 0]}>
+                      {risksByCategory.map((_, i) => <Cell key={i} fill={CATEGORY_COLORS[i % CATEGORY_COLORS.length]} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </div>
 
@@ -850,16 +875,18 @@ const Dashboard: React.FC = () => {
             {deptProfile.length === 0 ? (
               <div className="text-center py-12 text-gray-400">لا توجد بيانات</div>
             ) : (
-              <ResponsiveContainer width="100%" height={260}>
-                <RadarChart data={deptProfile} cx="50%" cy="50%" outerRadius={80}>
-                  <PolarGrid stroke="#e5e7eb" />
-                  <PolarAngleAxis dataKey="dept" tick={{ fill: '#6b7280', fontSize: 10 }} />
-                  <PolarRadiusAxis tick={false} axisLine={false} />
-                  <Radar name="حوادث" dataKey="incidents" stroke={CHART_COLORS.indigo} fill={CHART_COLORS.indigo} fillOpacity={0.25} strokeWidth={2} />
-                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                  <Tooltip content={<ChartTooltip />} />
-                </RadarChart>
-              </ResponsiveContainer>
+              <div style={{ direction: 'ltr' }}>
+                <ResponsiveContainer width="100%" height={260}>
+                  <RadarChart data={deptProfile} cx="50%" cy="50%" outerRadius={80}>
+                    <PolarGrid stroke="#e5e7eb" />
+                    <PolarAngleAxis dataKey="dept" tick={{ fill: '#6b7280', fontSize: 10 }} />
+                    <PolarRadiusAxis tick={false} axisLine={false} />
+                    <Radar name="حوادث" dataKey="incidents" stroke={CHART_COLORS.indigo} fill={CHART_COLORS.indigo} fillOpacity={0.25} strokeWidth={2} />
+                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8, direction: 'rtl' }} />
+                    <Tooltip content={<ChartTooltip />} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </div>
         </div>
