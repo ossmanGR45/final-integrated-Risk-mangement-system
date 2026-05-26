@@ -171,6 +171,21 @@ const RiskInquiryPage: React.FC = () => {
       .filter(Boolean);
   };
 
+  const extractStrategicGoalDtos = (value: unknown): string[] => {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map(item => {
+        if (!item) return '';
+        if (typeof item === 'string') return item.trim();
+        if (typeof item === 'object') {
+          const desc = (item as { goalDescription?: string }).goalDescription;
+          if (typeof desc === 'string') return desc.trim();
+        }
+        return '';
+      })
+      .filter(Boolean);
+  };
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const normalizeRisk = useCallback((risk: RawRisk): Risk => {
     const rawActions = risk.riskActions ?? risk.riskactions ?? risk.RiskActions;
@@ -188,6 +203,9 @@ const RiskInquiryPage: React.FC = () => {
         : extractActionDescriptions(rawActions);
     const mappedRiskCauses = extractCauseDescriptions(rawCauses);
     const mappedRiskGoals = extractGoalDescriptions(rawGoals);
+
+    const directStrategicGoals = toStringArray(risk.strategicGoals);
+    const extractedStrategicGoals = extractStrategicGoalDtos(risk.strategicGoals);
 
     return {
       id: Number(risk.id ?? 0),
@@ -207,10 +225,13 @@ const RiskInquiryPage: React.FC = () => {
       riskGoals:
         directRiskGoals.length > 0
           ? directRiskGoals
-          : mappedRiskGoals.length > 0
-            ? mappedRiskGoals
-            : mappedActionsByType.avoidance,
-      strategicGoals: toStringArray(risk.strategicGoals)
+          : mappedActionsByType.avoidance,
+      strategicGoals:
+        directStrategicGoals.length > 0
+          ? directStrategicGoals
+          : extractedStrategicGoals.length > 0
+            ? extractedStrategicGoals
+            : mappedRiskGoals
     };
   }, []);
 
@@ -228,9 +249,26 @@ const RiskInquiryPage: React.FC = () => {
           fetch(`${API_BASE}/responsible`, { headers })
         ]);
 
-        setCategories(await catRes.json());
+        const categoriesData = (await catRes.json()) as Category[];
+        setCategories(categoriesData);
+
         const risksPayload = (await riskRes.json()) as RawRisk[];
-        setAllRisks(Array.isArray(risksPayload) ? risksPayload.map(normalizeRisk) : []);
+        const normalizedRisks = Array.isArray(risksPayload) ? risksPayload.map(normalizeRisk) : [];
+
+        // Map categoryID dynamically on the client side using categoryName
+        const resolvedRisks = normalizedRisks.map(risk => {
+          if (!risk.categoryID || risk.categoryID === 0) {
+            const matchedCategory = categoriesData.find(
+              c => c.categoryName.trim() === risk.categoryName.trim()
+            );
+            if (matchedCategory) {
+              return { ...risk, categoryID: matchedCategory.id };
+            }
+          }
+          return risk;
+        });
+
+        setAllRisks(resolvedRisks);
         setResponsibleEntities(await respRes.json());
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -449,7 +487,7 @@ const RiskInquiryPage: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <select
               value={selectedCategory ?? ''}
               onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : null)}
@@ -472,16 +510,6 @@ const RiskInquiryPage: React.FC = () => {
               <option value="name">حسب الاسم</option>
               <option value="score-high">درجة الخطر من الأعلى</option>
               <option value="score-low">درجة الخطر من الأقل</option>
-            </select>
-
-            <select
-              value={riskTypeFilter}
-              onChange={(e) => setRiskTypeFilter(e.target.value)}
-              className="border rounded-xl px-4 py-4 text-right bg-white"
-            >
-              <option value="">كل الأنواع</option>
-              <option value="standard">قياسي</option>
-              <option value="custom">مخصص</option>
             </select>
           </div>
 
@@ -530,19 +558,19 @@ const RiskInquiryPage: React.FC = () => {
                     </p>
 
                     <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-end gap-2 text-gray-600">
-                        <span>{risk.location}</span>
+                      <div className="flex items-center justify-start gap-2 text-gray-600">
                         <MapPin size={16} />
+                        <span>{risk.location}</span>
                       </div>
 
-                      <div className="flex items-center justify-end gap-2 text-gray-600">
-                        <span>{responsible?.entityName || 'غير محدد'}</span>
+                      <div className="flex items-center justify-start gap-2 text-gray-600">
                         <User size={16} />
+                        <span>{responsible?.entityName || 'غير محدد'}</span>
                       </div>
 
-                      <div className="flex items-center justify-end gap-2 text-gray-600">
-                        <span>{risk.department}</span>
+                      <div className="flex items-center justify-start gap-2 text-gray-600">
                         <Activity size={16} />
+                        <span>{risk.department}</span>
                       </div>
                     </div>
 

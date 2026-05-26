@@ -84,7 +84,7 @@ th{background-color:#f5f5f5;font-weight:bold;text-align:center}.section-header{b
 
   const renderListSection = (title: string, items: string[], icon: React.ReactNode, emptyText: string) => (
     <div className="bg-gray-50 rounded-xl p-6">
-      <h4 className="text-lg font-bold text-right mb-4 flex items-center justify-end gap-2">{icon}{title}</h4>
+      <h4 className="text-lg font-bold text-right mb-4 flex items-center justify-start gap-2">{icon}{title}</h4>
       {items.length > 0 ? (
         <ul className="space-y-3 text-right">
           {items.map((item, index) => (
@@ -133,46 +133,53 @@ th{background-color:#f5f5f5;font-weight:bold;text-align:center}.section-header{b
             </div>
           </div>
 
-          {toArray(risk.strategicGoals).length > 0 && (
-            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-              <h4 className="text-lg font-bold text-right mb-4 flex items-center justify-end gap-2"><Target size={20} />المؤشر / الغاية الإستراتيجية</h4>
-              <div className="space-y-3 text-right">
-                {toArray(risk.strategicGoals).map((goal, index) => (
-                  <div key={`sg-${index}`} className="bg-white border border-gray-200 rounded-xl p-4 text-gray-700 leading-relaxed">{goal}</div>
-                ))}
-              </div>
+          <div className="bg-gray-50 rounded-xl p-6">
+            <h4 className="text-lg font-bold text-right mb-4 flex items-center justify-start gap-2">
+              <Target size={20} />
+              الغايات الإستراتيجية المرتبطة بالخطر
+            </h4>
+            <div className="space-y-2 text-right">
+              {toArray(risk.strategicGoals).length > 0 ? (
+                toArray(risk.strategicGoals).map((goal, index) => (
+                  <p key={`sg-${index}`} className="text-gray-700 text-lg leading-relaxed">
+                    {goal}
+                  </p>
+                ))
+              ) : (
+                <p className="text-gray-500 text-lg">لا توجد غايات إستراتيجية مرتبطة بهذه المخاطرة</p>
+              )}
             </div>
-          )}
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-end gap-2"><User size={20} />الجهة المسؤولة عن معالجة الخطر</h4>
+              <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-start gap-2"><User size={20} />الجهة المسؤولة عن معالجة الخطر</h4>
               <p className="text-gray-700 text-right text-lg">{responsible?.entityName || 'غير محددة'}</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-end gap-2"><User size={20} />الشخص المسؤول للاتصال به عند حدوث الخطر</h4>
+              <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-start gap-2"><User size={20} />الشخص المسؤول للاتصال به عند حدوث الخطر</h4>
               <p className="text-gray-700 text-right text-lg">{responsible?.contactName || 'غير محدد'}</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-end gap-2"><Phone size={20} />وسائل الاتصال</h4>
+              <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-start gap-2"><Phone size={20} />وسائل الاتصال</h4>
               <div className="space-y-2 text-right">
                 <p className="text-gray-700 text-lg">{responsible?.contactPhoneNumber || 'غير متوفر'}</p>
-                <p className="text-gray-700 text-base break-all">{responsible?.contactEmail || 'غير متوفر'}</p>
+                <p className="text-gray-700 text-base break-all" dir="ltr">{responsible?.contactEmail || 'غير متوفر'}</p>
               </div>
             </div>
             <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-end gap-2"><MapPin size={20} />مكان الخطر</h4>
+              <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-start gap-2"><MapPin size={20} />مكان الخطر</h4>
               <p className="text-gray-700 text-right text-lg">{risk.location}</p>
             </div>
           </div>
 
           <div className="bg-gray-50 rounded-xl p-6">
-            <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-end gap-2"><Activity size={20} />القسم</h4>
+            <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-start gap-2"><Activity size={20} />القسم</h4>
             <p className="text-gray-700 text-right text-lg">{risk.department}</p>
           </div>
 
           <div className="bg-gray-50 rounded-xl p-6">
-            <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-end gap-2"><AlertCircle size={20} />وصف المخاطرة</h4>
+            <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-start gap-2"><AlertCircle size={20} />وصف المخاطرة</h4>
             <p className="text-gray-700 text-right leading-relaxed">{risk.riskDescription}</p>
           </div>
 
@@ -182,19 +189,19 @@ th{background-color:#f5f5f5;font-weight:bold;text-align:center}.section-header{b
 
           {responsible && (
             <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-              <h4 className="text-lg font-bold text-right mb-4 flex items-center justify-end gap-2 text-blue-900"><ClipboardList size={20} />ملخص جهة التواصل</h4>
+              <h4 className="text-lg font-bold text-right mb-4 flex items-center justify-start gap-2 text-blue-900"><ClipboardList size={20} />ملخص جهة التواصل</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-right">
                 <div className="bg-white rounded-xl p-4 border">
-                  <div className="flex items-center justify-end gap-2 text-gray-500 mb-2"><User size={16} /><span>اسم الجهة</span></div>
+                  <div className="flex items-center justify-start gap-2 text-gray-500 mb-2"><User size={16} /><span>اسم الجهة</span></div>
                   <div className="font-bold text-blue-900">{responsible.entityName}</div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border">
-                  <div className="flex items-center justify-end gap-2 text-gray-500 mb-2"><Phone size={16} /><span>الهاتف</span></div>
-                  <div className="font-bold text-blue-900">{responsible.contactPhoneNumber || '-'}</div>
+                  <div className="flex items-center justify-start gap-2 text-gray-500 mb-2"><Phone size={16} /><span>الهاتف</span></div>
+                  <div className="font-bold text-blue-900" dir="ltr">{responsible.contactPhoneNumber || '-'}</div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border">
-                  <div className="flex items-center justify-end gap-2 text-gray-500 mb-2"><Mail size={16} /><span>الإيميل</span></div>
-                  <div className="font-bold text-blue-900 break-all">{responsible.contactEmail || '-'}</div>
+                  <div className="flex items-center justify-start gap-2 text-gray-500 mb-2"><Mail size={16} /><span>الإيميل</span></div>
+                  <div className="font-bold text-blue-900 break-all" dir="ltr">{responsible.contactEmail || '-'}</div>
                 </div>
               </div>
             </div>

@@ -273,7 +273,7 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-4xl font-bold mb-4 text-center">مقترحات المخاطر الجديدة</h2>
 
-        <div className="grid grid-cols-4 gap-3">
+        <div className={`grid ${role !== 'admin' ? 'grid-cols-3' : 'grid-cols-4'} gap-3`}>
           <input
             placeholder="رقم المقترح"
             className="border rounded px-4 py-3 text-lg"
@@ -286,17 +286,19 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
             onChange={e => setFilters({ ...filters, name: e.target.value })}
           />
 
-          <select
-            className="border rounded px-4 py-3 text-lg"
-            onChange={e => setFilters({ ...filters, category: e.target.value })}
-          >
-            <option value="">كل الفئات</option>
-            {categories.map(cat => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+          {role === 'admin' && (
+            <select
+              className="border rounded px-4 py-3 text-lg"
+              onChange={e => setFilters({ ...filters, category: e.target.value })}
+            >
+              <option value="">كل الفئات</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          )}
 
           <select
             className="border rounded px-4 py-3 text-lg"
@@ -317,8 +319,8 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
             <tr className="text-xl">
               <th className="px-6 py-4 text-center">رقم المقترح</th>
               <th className="px-6 py-4 text-center">اسم الخطر</th>
-              <th className="px-6 py-4 text-center">التاريخ</th>
-              <th className="px-6 py-4 text-center">الفئة</th>
+              {role === 'admin' && <th className="px-6 py-4 text-center">التاريخ</th>}
+              {role === 'admin' && <th className="px-6 py-4 text-center">الفئة</th>}
               <th className="px-6 py-4 text-center">الحالة</th>
               <th className="px-6 py-4 text-center">إجراءات</th>
             </tr>
@@ -329,8 +331,8 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
               <tr key={proposal.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-center text-lg font-medium">{proposal.id}</td>
                 <td className="px-6 py-4 text-center text-lg font-medium">{proposal.riskName}</td>
-                <td className="px-6 py-4 text-center text-lg">{proposal.submittedDate}</td>
-                <td className="px-6 py-4 text-center text-lg">{proposal.categoryName}</td>
+                {role === 'admin' && <td className="px-6 py-4 text-center text-lg">{proposal.submittedDate}</td>}
+                {role === 'admin' && <td className="px-6 py-4 text-center text-lg">{proposal.categoryName}</td>}
                 <td className="px-6 py-4 text-center">
                   <span
                     className={`${statusMap[proposal.status]?.color || 'bg-gray-500'} text-white px-6 py-2 rounded-full text-lg font-medium`}

@@ -100,6 +100,21 @@ const extractGoalDescriptions = (value: unknown): string[] => {
   }).filter(Boolean);
 };
 
+const extractStrategicGoalDtos = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map(item => {
+      if (!item) return '';
+      if (typeof item === 'string') return item.trim();
+      if (typeof item === 'object') {
+        const desc = (item as { goalDescription?: string }).goalDescription;
+        if (typeof desc === 'string') return desc.trim();
+      }
+      return '';
+    })
+    .filter(Boolean);
+};
+
 const normalizeRisk = (risk: RawRisk): RiskFull => {
   const rawActions = risk.riskActions ?? risk.riskactions ?? risk.RiskActions;
   const rawCauses = risk.riskCauses ?? risk.riskcauses ?? risk.RiskCauses;
@@ -113,6 +128,9 @@ const normalizeRisk = (risk: RawRisk): RiskFull => {
   const mappedActions = mappedByType.reduction.length > 0 ? mappedByType.reduction : extractActionDescriptions(rawActions);
   const mappedCauses = extractCauseDescriptions(rawCauses);
   const mappedGoals = extractGoalDescriptions(rawGoals);
+
+  const directStrategicGoals = toStringArray(risk.strategicGoals);
+  const extractedStrategicGoals = extractStrategicGoalDtos(risk.strategicGoals);
 
   return {
     id: Number(risk.id ?? 0),
@@ -129,8 +147,13 @@ const normalizeRisk = (risk: RawRisk): RiskFull => {
     department: String(risk.department ?? ''),
     riskCauses: directCauses.length > 0 ? directCauses : mappedCauses,
     riskActions: directActions.length > 0 ? directActions : mappedActions,
-    riskGoals: directGoals.length > 0 ? directGoals : (mappedGoals.length > 0 ? mappedGoals : mappedByType.avoidance),
-    strategicGoals: toStringArray(risk.strategicGoals),
+    riskGoals: directGoals.length > 0 ? directGoals : mappedByType.avoidance,
+    strategicGoals:
+      directStrategicGoals.length > 0
+        ? directStrategicGoals
+        : extractedStrategicGoals.length > 0
+          ? extractedStrategicGoals
+          : mappedGoals,
   };
 };
 
