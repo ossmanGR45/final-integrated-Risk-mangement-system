@@ -16,7 +16,7 @@ interface LoginResponse {
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  
+
   // State for form fields
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +28,7 @@ const LoginPage: React.FC = () => {
 
   // Generate random captcha
   const generateCaptcha = () => {
-    const chars = 'abcdefghjkmnpqrstuvwxyz23456789'; 
+    const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
     let result = '';
     for (let i = 0; i < 5; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -77,11 +77,11 @@ const LoginPage: React.FC = () => {
       localStorage.setItem('username', data.username);
       const primaryRole = data.roles?.[0] ?? data.role;
       localStorage.setItem('userRole', normalizeUserRole(primaryRole));
-      
+
       // Calculate token expiry timestamp
       const expiryTime = Date.now() + (data.expiresAt * 1000);
       localStorage.setItem('tokenExpiry', expiryTime.toString());
-      
+
       // Login flag
       localStorage.setItem('isLoggedIn', 'true');
 
@@ -96,7 +96,7 @@ const LoginPage: React.FC = () => {
 
     } catch (error: any) {
       console.error('❌ Login Error:', error);
-      
+
       if (error.message === 'Failed to fetch') {
         setErrorMessage('فشل الاتصال بالخادم. تأكد من اتصالك بالإنترنت');
       } else {
@@ -114,14 +114,14 @@ const LoginPage: React.FC = () => {
         <div className="w-full max-w-md">
           <div className="text-center mb-6">
             <div className="mb-4">
-              <img 
-                src="/JUlogo.png" 
-                alt="University of Jordan Logo" 
+              <img
+                src="/JUlogo.png"
+                alt="University of Jordan Logo"
                 className="w-28 h-28 mx-auto object-contain"
               />
             </div>
             <h2 className="text-gray-800 text-lg font-bold mb-1">الجامعة الأردنية</h2>
-            <h1 className="text-gray-900 text-xl font-bold">نظام تسجيل الطلبة</h1>
+            <h1 className="text-gray-900 text-xl font-bold">نظام إدارة المخاطر</h1>
           </div>
 
           {errorMessage && (
@@ -176,8 +176,8 @@ const LoginPage: React.FC = () => {
                   autoComplete="off"
                 />
                 <div className="w-28 bg-gray-200 rounded-lg flex items-center justify-center border border-gray-300 select-none">
-                  <span 
-                    className="text-xl font-bold tracking-widest text-gray-700" 
+                  <span
+                    className="text-xl font-bold tracking-widest text-gray-700"
                     style={{ textDecoration: 'line-through', fontFamily: 'monospace' }}
                   >
                     {captchaText}
@@ -214,7 +214,7 @@ const LoginPage: React.FC = () => {
       </div>
 
       {/* Left Side - Background Photo (second in DOM = left side in RTL layout) */}
-      <div 
+      <div
         className="hidden md:block flex-1 relative overflow-hidden"
         style={{
           backgroundImage: 'url(/loginphoto.png)',
