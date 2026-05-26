@@ -802,16 +802,36 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       return;
     }
 
-    const causeDtos = cleanList(causes).map(causeDescription => ({ causeDescription }));
+    const causeDtos = cleanList(causes).map(causeDescription => {
+      // Look up existing cause in catalog to avoid creating a duplicate
+      const existing = causesCatalog.find(
+        c => c.causeDescription?.trim().toLowerCase() === causeDescription.trim().toLowerCase()
+      );
+      return existing ? { id: existing.id } : { causeDescription };
+    });
     const actions = [
-      ...cleanList(responseActions).map(actionDescription => ({
-        actionDescription,
-        actionType: 1
-      })),
-      ...cleanList(preventiveActions).map(actionDescription => ({
-        actionDescription,
-        actionType: 0
-      }))
+      ...cleanList(responseActions).map(actionDescription => {
+        // Look up existing response action in catalog
+        const existing = actionsCatalog.find(
+          a =>
+            a.actionDescription?.trim().toLowerCase() === actionDescription.trim().toLowerCase() &&
+            (a.actionType === 1 || a.actionType === 'Reduction')
+        );
+        return existing
+          ? { id: existing.id, actionType: 1 }
+          : { actionDescription, actionType: 1 };
+      }),
+      ...cleanList(preventiveActions).map(actionDescription => {
+        // Look up existing preventive action in catalog
+        const existing = actionsCatalog.find(
+          a =>
+            a.actionDescription?.trim().toLowerCase() === actionDescription.trim().toLowerCase() &&
+            (a.actionType === 0 || a.actionType === 'Avoidance')
+        );
+        return existing
+          ? { id: existing.id, actionType: 0 }
+          : { actionDescription, actionType: 0 };
+      })
     ];
     const strategicGoalDtos = mapStrategicGoalLabelsToIds(
       cleanList(strategicGoals),
