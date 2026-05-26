@@ -13,6 +13,7 @@ interface ReviewedRow {
   date: string;
   status: UiStatus;
   rejectReason?: string;
+  userId: string;
 }
 
 interface Props {
@@ -38,6 +39,7 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
     type: '',
     status: '',
     name: '',
+    user: '',
   });
 
   const fetchAll = async () => {
@@ -58,13 +60,14 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
 
       const reqRows: ReviewedRow[] = (Array.isArray(requests) ? requests : []).map((r: any) => ({
         id: `req-${r.id}`,
-        type: 'logged',
+        type: 'logged' as const,
         typeLabel: 'خطر مسجل',
         name: r.description || '',
         category: r.category || '',
         date: r.expectedTime ? String(r.expectedTime).slice(0, 10) : '',
         status: uiStatusFromApi(r.status),
         rejectReason: r.rejectReason || undefined,
+        userId: r.userId !== undefined && r.userId !== null ? String(r.userId) : '',
       }));
 
       // Risks: only the *finished* ones (status 0=Rejected or 3=Accepted).
@@ -72,13 +75,14 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
         .filter((r: any) => r.status === 0 || r.status === 3)
         .map((r: any) => ({
           id: `risk-${r.id}`,
-          type: 'suggested',
+          type: 'suggested' as const,
           typeLabel: 'خطر مقترح',
           name: r.riskName || '',
           category: r.categoryName || '',
           date: '',
           status: uiStatusFromApi(r.status),
           rejectReason: r.rejectReason || undefined,
+          userId: r.userId !== undefined && r.userId !== null ? String(r.userId) : '',
         }));
 
       setRows([...reqRows, ...riskRows]);
@@ -99,7 +103,8 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
     return rows.filter(r =>
       (!filters.type || r.type === filters.type) &&
       (!filters.status || r.status === (filters.status as UiStatus)) &&
-      (!filters.name || r.name.toLowerCase().includes(filters.name.toLowerCase()))
+      (!filters.name || r.name.toLowerCase().includes(filters.name.toLowerCase())) &&
+      (!filters.user || r.userId.includes(filters.user.trim()))
     );
   }, [rows, filters]);
 
@@ -117,12 +122,18 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-4xl font-bold mb-4 text-center">الطلبات التي تمت مراجعتها</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <input
             placeholder="اسم الخطر"
             className="border rounded px-4 py-3 text-lg"
             value={filters.name}
             onChange={e => setFilters({ ...filters, name: e.target.value })}
+          />
+          <input
+            placeholder="رقم الموظف..."
+            className="border rounded px-4 py-3 text-lg"
+            value={filters.user}
+            onChange={e => setFilters({ ...filters, user: e.target.value })}
           />
           <select
             className="border rounded px-4 py-3 text-lg"
@@ -154,6 +165,7 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr className="text-xl">
               <th className="px-6 py-4 text-center">رقم</th>
+              <th className="px-6 py-4 text-center">رقم الموظف</th>
               <th className="px-6 py-4 text-center">النوع</th>
               <th className="px-6 py-4 text-center">اسم الخطر</th>
               <th className="px-6 py-4 text-center">التاريخ</th>
@@ -165,6 +177,7 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
             {filtered.map(row => (
               <tr key={row.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-center text-lg font-medium">{row.id}</td>
+                <td className="px-6 py-4 text-center text-lg font-medium">{row.userId || '—'}</td>
                 <td className="px-6 py-4 text-center text-lg">{row.typeLabel}</td>
                 <td className="px-6 py-4 text-center text-lg font-medium">{row.name}</td>
                 <td className="px-6 py-4 text-center text-lg">{row.date}</td>
