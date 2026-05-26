@@ -326,21 +326,33 @@ const Dashboard: React.FC = () => {
     0: CHART_COLORS.red, 1: CHART_COLORS.amber, 2: CHART_COLORS.teal, 3: CHART_COLORS.green,
   };
 
-  // 3. Risks by Status
+  // Request (Incident) status labels and colors
+  const INCIDENT_STATUS_LABELS: Record<string, string> = {
+    pending: 'قيد الانتظار',
+    accepted: 'مقبولة',
+    rejected: 'مرفوضة',
+  };
+  const INCIDENT_STATUS_COLORS: Record<string, string> = {
+    pending: CHART_COLORS.amber,
+    accepted: CHART_COLORS.green,
+    rejected: CHART_COLORS.red,
+  };
+
+  // 3. Incidents by Status (uses RiskRequest data)
   const risksByStatus = useMemo(() => {
-    const counts: Record<number, number> = {};
-    rawRisksData.forEach(r => {
-      const s = Number(r.status ?? r.Status ?? 1);
+    const counts: Record<string, number> = {};
+    requests.forEach(r => {
+      const s = r.status || 'pending';
       counts[s] = (counts[s] || 0) + 1;
     });
     return Object.entries(counts)
       .map(([key, count]) => ({
-        name: STATUS_LABELS[Number(key)] || `حالة ${key}`,
+        name: INCIDENT_STATUS_LABELS[key] || key,
         value: count,
-        color: STATUS_COLORS[Number(key)] || CHART_COLORS.blue,
+        color: INCIDENT_STATUS_COLORS[key] || CHART_COLORS.blue,
       }))
       .sort((a, b) => b.value - a.value);
-  }, [rawRisksData]);
+  }, [requests]);
 
   // 4. Mitigation Type Split
   const mitigationSplit = useMemo(() => {
@@ -366,36 +378,30 @@ const Dashboard: React.FC = () => {
 
   const mitigationTotal = mitigationSplit[0].value + mitigationSplit[1].value;
 
-  // 5. Risk Count by Category
+  // 5. Incident Count by Category (uses RiskRequest data)
   const risksByCategory = useMemo(() => {
     const counts: Record<string, number> = {};
-    risks.forEach(r => {
-      const cat = r.categoryName || 'غير مصنف';
+    requests.forEach((r: any) => {
+      const cat = r.category || r.Category || 'غير مصنف';
       counts[cat] = (counts[cat] || 0) + 1;
     });
     return Object.entries(counts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
-  }, [risks]);
+  }, [requests]);
 
   const CATEGORY_COLORS = ['#6366f1', '#8b5cf6', '#3b82f6', '#0ea5e9', '#22d3ee', '#14b8a6', '#f59e0b', '#ef4444'];
 
-  // 6. Dept Risk Profile
+  // 6. Dept Profile (incidents only, from RiskRequest)
   const deptProfile = useMemo(() => {
-    const deptMap: Record<string, { risks: number; incidents: number; resolved: number }> = {};
-    risks.forEach(r => {
-      const d = r.department || 'غير محدد';
-      if (!deptMap[d]) deptMap[d] = { risks: 0, incidents: 0, resolved: 0 };
-      deptMap[d].risks++;
-    });
+    const deptMap: Record<string, { incidents: number }> = {};
     requests.forEach((r: any) => {
-      const d = r.department || 'غير محدد';
-      if (!deptMap[d]) deptMap[d] = { risks: 0, incidents: 0, resolved: 0 };
+      const d = r.department || r.Department || 'غير محدد';
+      if (!deptMap[d]) deptMap[d] = { incidents: 0 };
       deptMap[d].incidents++;
-      if (r.status === 'accepted') deptMap[d].resolved++;
     });
     return Object.entries(deptMap).map(([dept, v]) => ({ dept, ...v }));
-  }, [risks, requests]);
+  }, [requests]);
 
   // 7. Trend Data (half-year)
   const trendData = useMemo(() => {
@@ -513,19 +519,19 @@ const Dashboard: React.FC = () => {
     };
   }, [requests]);
 
-  // 8. Heatmap Data
+  // 8. Heatmap Data (uses RiskRequest)
   const heatmapGrid = useMemo(() => {
     const grid: Record<string, number> = {};
-    risks.forEach(r => {
-      const l = r.likelihood;
-      const i = r.impact;
+    requests.forEach((r: any) => {
+      const l = Number(r.likelihood ?? r.Likelihood ?? 0);
+      const i = Number(r.impact ?? r.Impact ?? 0);
       if (l >= 1 && l <= 5 && i >= 1 && i <= 5) {
         const key = `${l}-${i}`;
         grid[key] = (grid[key] || 0) + 1;
       }
     });
     return grid;
-  }, [risks]);
+  }, [requests]);
 
   const getHeatColor = (count: number) => {
     if (!count) return '#f1f5f9';
@@ -748,10 +754,10 @@ const Dashboard: React.FC = () => {
 
         {/* 3 & 4. Status Bar Chart + Mitigation Donut */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 3. Risks by Status */}
+          {/* 3. Incidents by Status */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold text-right mb-1">المخاطر حسب الحالة</h3>
-            <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Risks by Status</p>
+            <h3 className="text-xl font-bold text-right mb-1">الحوادث حسب الحالة</h3>
+            <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Incidents by Status</p>
             {risksByStatus.length === 0 ? (
               <div className="text-center py-12 text-gray-400">لا توجد بيانات</div>
             ) : (
@@ -816,10 +822,10 @@ const Dashboard: React.FC = () => {
 
         {/* 5 & 6. Category Bars + Dept Radar */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* 5. Risk Count by Category */}
+          {/* 5. Incident Count by Category */}
           <div className="lg:col-span-3 bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold text-right mb-1">المخاطر حسب الفئة</h3>
-            <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Risk Count by Category</p>
+            <h3 className="text-xl font-bold text-right mb-1">الحوادث حسب الفئة</h3>
+            <p className="text-gray-400 text-xs text-right mb-4" style={{ fontFamily: 'monospace' }}>Incidents by Category</p>
             {risksByCategory.length === 0 ? (
               <div className="text-center py-12 text-gray-400">لا توجد بيانات</div>
             ) : (
@@ -829,7 +835,7 @@ const Dashboard: React.FC = () => {
                   <XAxis type="number" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <YAxis type="category" dataKey="name" width={130} tick={{ fill: '#4b5563', fontSize: 12 }} axisLine={false} tickLine={false} />
                   <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f3f4f610' }} />
-                  <Bar dataKey="count" name="عدد المخاطر" radius={[0, 8, 8, 0]}>
+                  <Bar dataKey="count" name="عدد الحوادث" radius={[0, 8, 8, 0]}>
                     {risksByCategory.map((_, i) => <Cell key={i} fill={CATEGORY_COLORS[i % CATEGORY_COLORS.length]} />)}
                   </Bar>
                 </BarChart>
@@ -849,9 +855,7 @@ const Dashboard: React.FC = () => {
                   <PolarGrid stroke="#e5e7eb" />
                   <PolarAngleAxis dataKey="dept" tick={{ fill: '#6b7280', fontSize: 10 }} />
                   <PolarRadiusAxis tick={false} axisLine={false} />
-                  <Radar name="مخاطر" dataKey="risks" stroke={CHART_COLORS.indigo} fill={CHART_COLORS.indigo} fillOpacity={0.2} strokeWidth={1.5} />
-                  <Radar name="حوادث" dataKey="incidents" stroke={CHART_COLORS.pink} fill={CHART_COLORS.pink} fillOpacity={0.15} strokeWidth={1.5} />
-                  <Radar name="محلولة" dataKey="resolved" stroke={CHART_COLORS.green} fill={CHART_COLORS.green} fillOpacity={0.15} strokeWidth={1.5} />
+                  <Radar name="حوادث" dataKey="incidents" stroke={CHART_COLORS.indigo} fill={CHART_COLORS.indigo} fillOpacity={0.25} strokeWidth={2} />
                   <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                   <Tooltip content={<ChartTooltip />} />
                 </RadarChart>
