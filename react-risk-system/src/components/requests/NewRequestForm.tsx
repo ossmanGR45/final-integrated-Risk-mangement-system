@@ -430,13 +430,6 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
     }
   }, [selectedRisk, selectedRiskStrategicGoals]);
 
-  const causesRef = React.useRef(causes);
-  causesRef.current = causes;
-  const responseActionsRef = React.useRef(responseActions);
-  responseActionsRef.current = responseActions;
-  const preventiveActionsRef = React.useRef(preventiveActions);
-  preventiveActionsRef.current = preventiveActions;
-
   useEffect(() => {
     if (!selectedRisk?.id) return;
 
@@ -466,46 +459,6 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
             };
           })
         );
-
-        // Helper to check if a list of items is empty
-        const isEmptyList = (list: string[]) => {
-          return !list || list.length === 0 || (list.length === 1 && !list[0].trim());
-        };
-
-        const causesEmpty = isEmptyList(causesRef.current);
-        const responseActionsEmpty = isEmptyList(responseActionsRef.current);
-        const preventiveActionsEmpty = isEmptyList(preventiveActionsRef.current);
-
-        const isInitialRisk = initialData && selectedRisk.riskName === initialData.name;
-
-        // Auto-populate the lists if we are not loading the initial risk, or if they are currently empty
-        if (!isInitialRisk || causesEmpty || responseActionsEmpty || preventiveActionsEmpty) {
-          // Map causes
-          const detailedCauses = (detailedRisk.riskCauses || detailedRisk.RiskCauses || [])
-            .map((rc: any) => rc.cause?.causeDescription || rc.causeDescription || '')
-            .filter(Boolean);
-          if (detailedCauses.length > 0 && (!isInitialRisk || causesEmpty)) {
-            setCauses(detailedCauses);
-          }
-
-          // Map response actions (actionType === 1)
-          const detailedResponseActions = (detailedRisk.riskActions || detailedRisk.RiskActions || [])
-            .filter((ra: any) => ra.action?.actionType === 1 || ra.actionType === 1 || ra.actionType === 'Reduction')
-            .map((ra: any) => ra.action?.actionDescription || ra.actionDescription || '')
-            .filter(Boolean);
-          if (detailedResponseActions.length > 0 && (!isInitialRisk || responseActionsEmpty)) {
-            setResponseActions(detailedResponseActions);
-          }
-
-          // Map preventive actions (actionType === 0)
-          const detailedPreventiveActions = (detailedRisk.riskActions || detailedRisk.RiskActions || [])
-            .filter((ra: any) => ra.action?.actionType === 0 || ra.actionType === 0 || ra.actionType === 'Avoidance')
-            .map((ra: any) => ra.action?.actionDescription || ra.actionDescription || '')
-            .filter(Boolean);
-          if (detailedPreventiveActions.length > 0 && (!isInitialRisk || preventiveActionsEmpty)) {
-            setPreventiveActions(detailedPreventiveActions);
-          }
-        }
       } catch (error) {
         console.error('Error loading related risk details:', error);
       }

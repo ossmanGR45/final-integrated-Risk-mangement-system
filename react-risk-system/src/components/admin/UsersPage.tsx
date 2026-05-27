@@ -509,7 +509,6 @@ export default function UsersPage() {
             <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-5 flex items-center justify-between">
               <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
                 <span>تعديل الصلاحيات: {selectedUser.userName}</span>
-                <Edit2 size={18} className="text-[#105a9e]" />
               </h3>
               <button
                 type="button"
