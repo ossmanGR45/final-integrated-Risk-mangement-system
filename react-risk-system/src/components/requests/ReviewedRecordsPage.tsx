@@ -1,8 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { UserRole } from '../../types';
 import { uiStatusFromApi, UiStatus } from '../../utils/statusMapping';
 import { API_BASE } from '../../api/http';
 import Pagination from '../common/Pagination';
+import NewRequestForm from './NewRequestForm';
+import { FileDown } from 'lucide-react';
 
 // Extended display status — adds 'redirected' for the manager's "تم تحويلها" case.
 type DisplayStatus = UiStatus | 'redirected';
@@ -24,6 +26,7 @@ interface ReviewedRow {
   displayStatus: DisplayStatus;
   rejectReason?: string;
   userId: string;
+  raw: any;
 }
 
 interface Props {
@@ -100,6 +103,7 @@ const toRequestRow = (r: any): ReviewedRow => ({
   displayStatus: uiStatusFromApi(r.status),
   rejectReason: r.rejectReason || undefined,
   userId: r.userId != null ? String(r.userId) : '',
+  raw: r,
 });
 
 // -----------------------------------------------------------------------
@@ -128,6 +132,7 @@ const toManagerRequestRow = (r: any): ReviewedRow => {
     displayStatus,
     rejectReason: r.rejectReason || undefined,
     userId: r.userId != null ? String(r.userId) : '',
+    raw: r,
   };
 };
 
@@ -145,7 +150,89 @@ const toRiskRow = (r: any, displayOverride?: DisplayStatus): ReviewedRow => ({
   displayStatus: displayOverride ?? uiStatusFromApi(r.status),
   rejectReason: r.rejectReason || undefined,
   userId: r.userId != null ? String(r.userId) : '',
+  raw: r,
 });
+
+// -----------------------------------------------------------------------
+// Adapter: Maps a raw request object to NewRequestForm initialData shape.
+// -----------------------------------------------------------------------
+const adaptRequestToForm = (r: any) => {
+  return {
+    mode: r.occured ? ('after' as const) : ('before' as const),
+    category: r.category || '',
+    name: r.risk?.riskName || r.description || '',
+    date: r.expectedTime ? String(r.expectedTime).slice(0, 10) : '',
+    impact: r.impact || 1,
+    likelihood: r.likelihood || 1,
+    postImpact: r.postImpact || 1,
+    postLikelihood: r.postLikelihood || 1,
+    responsiblePerson: r.responsible?.contactName || r.responsible?.entityName || '',
+    customResponsible: '',
+    semester: 'first' as const,
+    mitigationActions: (r.requestActions || [])
+      .map((rm: any) => rm?.action?.actionDescription || '')
+      .filter(Boolean),
+    causes: (r.requestCauses || [])
+      .map((rc: any) => rc?.cause?.causeDescription || '')
+      .filter(Boolean),
+    responseActions: (r.requestActions || [])
+      .filter((rm: any) => rm?.action?.actionType === 1 || rm?.action?.actionType === 'Reduction')
+      .map((rm: any) => rm?.action?.actionDescription || '')
+      .filter(Boolean),
+    preventiveActions: (r.requestActions || [])
+      .filter((rm: any) => rm?.action?.actionType === 0 || rm?.action?.actionType === 'Avoidance')
+      .map((rm: any) => rm?.action?.actionDescription || '')
+      .filter(Boolean),
+    strategicGoal: (r.requestGoals || [])
+      .map((rg: any) => rg?.strategicGoal?.goalDescription || '')
+      .filter(Boolean)[0] || '',
+    strategicGoalsList: (r.requestGoals || [])
+      .map((rg: any) => rg?.strategicGoal?.goalDescription || '')
+      .filter(Boolean),
+    riskId: r.riskId || null,
+  };
+};
+
+// -----------------------------------------------------------------------
+// Adapter: Maps a raw risk suggestion to NewRequestForm initialData shape.
+// -----------------------------------------------------------------------
+const adaptRiskToForm = (r: any) => {
+  const causes = (r.riskCauses || [])
+    .map((rc: any) => rc?.cause?.causeDescription || rc?.causeDescription || '')
+    .filter(Boolean);
+  const responseActions = (r.riskActions || [])
+    .filter((rm: any) => rm?.action?.actionType === 1 || rm?.actionType === 1 || rm?.actionType === 'Reduction')
+    .map((rm: any) => rm?.action?.actionDescription || rm?.actionDescription || '')
+    .filter(Boolean);
+  const preventiveActions = (r.riskActions || [])
+    .filter((rm: any) => rm?.action?.actionType === 0 || rm?.type === 0 || rm?.actionType === 'Avoidance')
+    .map((rm: any) => rm?.action?.actionDescription || rm?.actionDescription || '')
+    .filter(Boolean);
+  const strategicGoalsList = (r.riskGoals || r.strategicGoals || [])
+    .map((rg: any) => typeof rg === 'string' ? rg : rg?.strategicGoal?.goalDescription || '')
+    .filter(Boolean);
+
+  return {
+    mode: 'before' as const,
+    category: r.categoryName || '',
+    name: r.riskName || '',
+    date: '',
+    impact: r.impact || 1,
+    likelihood: r.likelihood || 1,
+    postImpact: 1,
+    postLikelihood: 1,
+    responsiblePerson: r.responsible?.contactName || r.responsible?.entityName || '',
+    customResponsible: '',
+    semester: 'first' as const,
+    mitigationActions: preventiveActions,
+    causes,
+    responseActions,
+    preventiveActions,
+    strategicGoal: strategicGoalsList[0] || '',
+    strategicGoalsList,
+    riskId: r.id || null,
+  };
+};
 
 // -----------------------------------------------------------------------
 // Component
@@ -157,6 +244,83 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [filters, setFilters] = useState({ type: '', status: '', name: '', user: '' });
+  const [selectedRow, setSelectedRow] = useState<ReviewedRow | null>(null);
+
+  const closeModal = () => {
+    setSelectedRow(null);
+  };
+
+  const openRowDetails = (row: ReviewedRow) => {
+    setSelectedRow(row);
+  };
+
+  const generatePDF = useCallback(() => {
+    if (!selectedRow) return;
+    const r = selectedRow.raw;
+
+    const isRequest = selectedRow.type === 'logged';
+
+    const riskName = isRequest ? (r.risk?.riskName || r.description || '') : (r.riskName || '');
+    const category = isRequest ? (r.category || '') : (r.categoryName || '');
+    const department = r.department || '';
+    const location = isRequest ? '' : (r.location || '');
+    const impact = r.impact || 1;
+    const likelihood = r.likelihood || 1;
+    const score = impact * likelihood;
+    const responsibleEntity = r.responsible?.entityName || '';
+    const responsiblePerson = r.responsible?.contactName || '';
+    const responsiblePhone = r.responsible?.contactPhoneNumber || '';
+    const responsibleEmail = r.responsible?.contactEmail || '';
+    const date = isRequest && r.expectedTime ? String(r.expectedTime).slice(0, 10) : '';
+
+    const causes: string[] = isRequest
+      ? (r.requestCauses || []).map((rc: any) => rc?.cause?.causeDescription || '').filter(Boolean)
+      : (r.riskCauses || []).map((rc: any) => rc?.cause?.causeDescription || rc?.causeDescription || '').filter(Boolean);
+
+    const responseActions: string[] = isRequest
+      ? (r.requestActions || []).filter((rm: any) => rm?.action?.actionType === 1 || rm?.action?.actionType === 'Reduction').map((rm: any) => rm?.action?.actionDescription || '').filter(Boolean)
+      : (r.riskActions || []).filter((rm: any) => rm?.action?.actionType === 1 || rm?.actionType === 1).map((rm: any) => rm?.action?.actionDescription || rm?.actionDescription || '').filter(Boolean);
+
+    const preventiveActions: string[] = isRequest
+      ? (r.requestActions || []).filter((rm: any) => rm?.action?.actionType === 0 || rm?.action?.actionType === 'Avoidance').map((rm: any) => rm?.action?.actionDescription || '').filter(Boolean)
+      : (r.riskActions || []).filter((rm: any) => rm?.action?.actionType === 0 || rm?.actionType === 0).map((rm: any) => rm?.action?.actionDescription || rm?.actionDescription || '').filter(Boolean);
+
+    const strategicGoals: string[] = isRequest
+      ? (r.requestGoals || []).map((rg: any) => rg?.strategicGoal?.goalDescription || '').filter(Boolean)
+      : (r.riskGoals || []).map((rg: any) => typeof rg === 'string' ? rg : rg?.strategicGoal?.goalDescription || '').filter(Boolean);
+
+    const bulletList = (items: string[]) =>
+      items.length > 0
+        ? `<ul style="margin:0;padding-right:20px;list-style-type:disc;">${items.map(i => `<li style="margin-bottom:4px;">${i}</li>`).join('')}</ul>`
+        : '<span style="color:#999;">لا يوجد</span>';
+
+    const scoreLabel = score >= 15 ? 'حرج' : score >= 8 ? 'عالي' : score >= 4 ? 'متوسط' : 'منخفض';
+    const scoreColor = score >= 15 ? '#dc2626' : score >= 8 ? '#ea580c' : score >= 4 ? '#ca8a04' : '#16a34a';
+
+    const htmlContent = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"/><title>${riskName}</title>
+<style>@page{size:A4;margin:20mm}*{box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;padding:20px;color:#222;font-size:14px;line-height:1.6}
+h1{text-align:center;font-size:22px;margin-bottom:20px;font-weight:bold}table{width:100%;border-collapse:collapse}th,td{border:1px solid #333;padding:10px 14px;text-align:right;vertical-align:top}
+th{background-color:#f5f5f5;font-weight:bold;text-align:center}.section-header{background-color:#f0f0f0;font-weight:bold;text-align:center;font-size:15px}.value-cell{text-align:center}ul{text-align:right}
+@media print{body{padding:0}}</style></head><body><h1>${riskName}</h1><table>
+<tr><th style="width:50%">احتمالية الخطر</th><th style="width:50%">شدة أثر الخطر</th></tr>
+<tr><td class="value-cell">${likelihood}</td><td class="value-cell">${impact}</td></tr>
+<tr><th colspan="2">درجة الخطر: <span style="color:${scoreColor};font-weight:bold;">${score} — ${scoreLabel}</span></th></tr>
+${category ? `<tr><td colspan="2" class="section-header">الفئة</td></tr><tr><td colspan="2" class="value-cell">${category}</td></tr>` : ''}
+${department ? `<tr><td colspan="2" class="section-header">القسم</td></tr><tr><td colspan="2" class="value-cell">${department}</td></tr>` : ''}
+${date ? `<tr><td colspan="2" class="section-header">التاريخ</td></tr><tr><td colspan="2" class="value-cell">${date}</td></tr>` : ''}
+${location ? `<tr><td colspan="2" class="section-header">مكان الخطر</td></tr><tr><td colspan="2" class="value-cell">${location}</td></tr>` : ''}
+${strategicGoals.length > 0 ? `<tr><td colspan="2" class="section-header">الغايات الاستراتيجية</td></tr><tr><td colspan="2">${bulletList(strategicGoals)}</td></tr>` : ''}
+<tr><th>الجهة المسؤولة</th><th>الشخص المسؤول</th></tr>
+<tr><td class="value-cell">${responsibleEntity || 'غير محددة'}</td><td class="value-cell">${responsiblePerson || 'غير محدد'}</td></tr>
+${responsiblePhone || responsibleEmail ? `<tr><th>الهاتف</th><th>البريد الإلكتروني</th></tr><tr><td class="value-cell" dir="ltr">${responsiblePhone || '-'}</td><td class="value-cell" dir="ltr">${responsibleEmail || '-'}</td></tr>` : ''}
+<tr><td colspan="2" class="section-header">الأسباب المحتملة لحدوث الخطر</td></tr><tr><td colspan="2">${bulletList(causes)}</td></tr>
+<tr><td colspan="2" class="section-header">الإجراءات التي تتخذها الجهة المسؤولة عند وقوع الخطر</td></tr><tr><td colspan="2">${bulletList(responseActions)}</td></tr>
+<tr><td colspan="2" class="section-header">الإجراءات الواجب اتباعها لتفادي حدوث تلك المخاطر</td></tr><tr><td colspan="2">${bulletList(preventiveActions)}</td></tr>
+</table></body></html>`;
+
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(htmlContent); w.document.close(); w.onload = () => w.print(); }
+  }, [selectedRow]);
 
   const fetchAll = async () => {
     try {
@@ -167,6 +331,9 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
 
       let reqRows: ReviewedRow[] = [];
       let riskRows: ReviewedRow[] = [];
+
+      const reqIncludes = encodeURIComponent('Risk,RequestCauses.Cause,RequestActions.Action,RequestGoals.StrategicGoal');
+      const riskIncludes = encodeURIComponent('RiskCauses.Cause,RiskActions.Action,RiskGoals.StrategicGoal');
 
       // =================================================================
       // INITIATOR
@@ -181,11 +348,11 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
 
         const [reqRes, riskCustomRes, riskAcceptedRes] = await Promise.all([
           // Own finished requests (Accepted or Rejected)
-          fetch(`${API_BASE}/requests?pending=false&include=Risk`, { headers }),
+          fetch(`${API_BASE}/requests?pending=false&include=${reqIncludes}`, { headers }),
           // Own risk suggestions that are still custom=true (includes rejected ones)
-          fetch(`${API_BASE}/risk?custom=true`, { headers }),
+          fetch(`${API_BASE}/risk?custom=true&include=${riskIncludes}`, { headers }),
           // Accepted suggestions (now custom=false); we'll filter by userId client-side
-          fetch(`${API_BASE}/risk?status=3`, { headers }),
+          fetch(`${API_BASE}/risk?status=3&include=${riskIncludes}`, { headers }),
         ]);
 
         const requests: any[] = reqRes.ok ? await reqRes.json() : [];
@@ -225,11 +392,11 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
       if (role === 'manager') {
         const [reqRes, riskCustomRes, riskAllRes] = await Promise.all([
           // All requests in manager's scope (own + team), all statuses
-          fetch(`${API_BASE}/requests?include=Risk`, { headers }),
+          fetch(`${API_BASE}/requests?include=${reqIncludes}`, { headers }),
           // Risk suggestions (custom=true) in manager's scope: own + team's
-          fetch(`${API_BASE}/risk?custom=true`, { headers }),
+          fetch(`${API_BASE}/risk?custom=true&include=${riskIncludes}`, { headers }),
           // All risks (no custom filter) in manager's scope — catches accepted team suggestions
-          fetch(`${API_BASE}/risk`, { headers }),
+          fetch(`${API_BASE}/risk?include=${riskIncludes}`, { headers }),
         ]);
 
         const requests: any[] = reqRes.ok ? await reqRes.json() : [];
@@ -276,9 +443,9 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
       // =================================================================
       if (role === 'admin') {
         const [reqRes, riskRes] = await Promise.all([
-          fetch(`${API_BASE}/requests?pending=false&include=Risk`, { headers }),
+          fetch(`${API_BASE}/requests?pending=false&include=${reqIncludes}`, { headers }),
           // No custom param → role-scoped: (custom=false || reDirected=true)
-          fetch(`${API_BASE}/risk`, { headers }),
+          fetch(`${API_BASE}/risk?include=${riskIncludes}`, { headers }),
         ]);
 
         const requests: any[] = reqRes.ok ? await reqRes.json() : [];
@@ -433,6 +600,7 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
               <th className="px-6 py-4 text-center">التاريخ</th>
               <th className="px-6 py-4 text-center">الفئة</th>
               <th className="px-6 py-4 text-center">الحالة</th>
+              <th className="px-6 py-4 text-center">إجراءات</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -450,6 +618,14 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
                   >
                     {statusLabel[row.displayStatus]}
                   </span>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <button
+                    onClick={() => openRowDetails(row)}
+                    className="border border-gray-400 px-6 py-2 text-lg rounded-lg hover:bg-gray-100"
+                  >
+                    عرض التفاصيل
+                  </button>
                 </td>
               </tr>
             ))}
@@ -471,6 +647,54 @@ const ReviewedRecordsPage: React.FC<Props> = ({ role }) => {
       {filtered.length === 0 && (
         <div className="p-10 text-center text-gray-500 text-lg">
           لا توجد سجلات مطابقة للفلاتر الحالية
+        </div>
+      )}
+
+      {selectedRow && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-[1100px] max-h-[90vh] overflow-y-auto p-8 relative">
+            <button onClick={closeModal} className="absolute left-4 top-4 text-3xl">
+              ✕
+            </button>
+
+            <h3 className="text-3xl font-bold mb-6 text-center">تفاصيل العملية</h3>
+
+            <NewRequestForm
+              initialData={
+                selectedRow.type === 'logged'
+                  ? adaptRequestToForm(selectedRow.raw)
+                  : adaptRiskToForm(selectedRow.raw)
+              }
+              disabled={true}
+              title="تفاصيل العملية"
+              submitLabel="عرض فقط"
+              onSubmit={() => {}}
+              onCancel={closeModal}
+            />
+
+            {selectedRow.rejectReason && (
+              <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4 text-right">
+                <p className="font-bold text-red-700 mb-1">سبب الرفض</p>
+                <p className="text-red-800">{selectedRow.rejectReason}</p>
+              </div>
+            )}
+
+            <div className="mt-6 flex gap-4">
+              <button
+                onClick={generatePDF}
+                className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <FileDown size={20} />
+                حفظ كملف PDF
+              </button>
+              <button
+                onClick={closeModal}
+                className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-bold text-lg hover:bg-gray-300 transition-colors"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

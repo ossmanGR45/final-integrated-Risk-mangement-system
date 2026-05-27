@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Siren,
   ShieldCheck,
+  Check,
   ChevronDown,
   ChevronLeft,
   Plus,
@@ -61,6 +62,7 @@ interface RiskRequestFormData {
   customResponsible: string;
   semester: SemesterValue;
   strategicGoal?: string;
+  strategicGoalsList?: string[];
   causes?: string[];
   responseActions?: string[];
   preventiveActions?: string[];
@@ -283,13 +285,6 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
     return uniqueValues(risks.map(risk => risk.strategicGoals));
   }, [risks]);
 
-  const strategicGoalOptions = useMemo(() => {
-    if (selectedRisk?.strategicGoals && selectedRisk.strategicGoals.length > 0) {
-      return selectedRisk.strategicGoals.filter(Boolean);
-    }
-    return allStrategicGoals;
-  }, [selectedRisk, allStrategicGoals]);
-
   const selectedRiskStrategicGoals = useMemo(() => {
     if (!selectedRisk) return [];
     if (Array.isArray(selectedRisk.riskGoals) && selectedRisk.riskGoals.length > 0) {
@@ -302,6 +297,13 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
 
     return [];
   }, [selectedRisk]);
+
+  const strategicGoalOptions = useMemo(() => {
+    if (selectedRisk) {
+      return selectedRiskStrategicGoals;
+    }
+    return allStrategicGoals;
+  }, [selectedRisk, selectedRiskStrategicGoals, allStrategicGoals]);
 
   const causeTemplates = useMemo(() => {
     if (selectedRisk) {
@@ -428,6 +430,13 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
     }
   }, [selectedRisk, selectedRiskStrategicGoals]);
 
+  const causesRef = React.useRef(causes);
+  causesRef.current = causes;
+  const responseActionsRef = React.useRef(responseActions);
+  responseActionsRef.current = responseActions;
+  const preventiveActionsRef = React.useRef(preventiveActions);
+  preventiveActionsRef.current = preventiveActions;
+
   useEffect(() => {
     if (!selectedRisk?.id) return;
 
@@ -457,13 +466,53 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
             };
           })
         );
+
+        // Helper to check if a list of items is empty
+        const isEmptyList = (list: string[]) => {
+          return !list || list.length === 0 || (list.length === 1 && !list[0].trim());
+        };
+
+        const causesEmpty = isEmptyList(causesRef.current);
+        const responseActionsEmpty = isEmptyList(responseActionsRef.current);
+        const preventiveActionsEmpty = isEmptyList(preventiveActionsRef.current);
+
+        const isInitialRisk = initialData && selectedRisk.riskName === initialData.name;
+
+        // Auto-populate the lists if we are not loading the initial risk, or if they are currently empty
+        if (!isInitialRisk || causesEmpty || responseActionsEmpty || preventiveActionsEmpty) {
+          // Map causes
+          const detailedCauses = (detailedRisk.riskCauses || detailedRisk.RiskCauses || [])
+            .map((rc: any) => rc.cause?.causeDescription || rc.causeDescription || '')
+            .filter(Boolean);
+          if (detailedCauses.length > 0 && (!isInitialRisk || causesEmpty)) {
+            setCauses(detailedCauses);
+          }
+
+          // Map response actions (actionType === 1)
+          const detailedResponseActions = (detailedRisk.riskActions || detailedRisk.RiskActions || [])
+            .filter((ra: any) => ra.action?.actionType === 1 || ra.actionType === 1 || ra.actionType === 'Reduction')
+            .map((ra: any) => ra.action?.actionDescription || ra.actionDescription || '')
+            .filter(Boolean);
+          if (detailedResponseActions.length > 0 && (!isInitialRisk || responseActionsEmpty)) {
+            setResponseActions(detailedResponseActions);
+          }
+
+          // Map preventive actions (actionType === 0)
+          const detailedPreventiveActions = (detailedRisk.riskActions || detailedRisk.RiskActions || [])
+            .filter((ra: any) => ra.action?.actionType === 0 || ra.actionType === 0 || ra.actionType === 'Avoidance')
+            .map((ra: any) => ra.action?.actionDescription || ra.actionDescription || '')
+            .filter(Boolean);
+          if (detailedPreventiveActions.length > 0 && (!isInitialRisk || preventiveActionsEmpty)) {
+            setPreventiveActions(detailedPreventiveActions);
+          }
+        }
       } catch (error) {
         console.error('Error loading related risk details:', error);
       }
     };
 
     fetchRiskDetails();
-  }, [selectedRisk?.id]);
+  }, [selectedRisk?.id, initialData]);
 
   const countFilled = (items: string[]) => items.filter(item => item.trim()).length;
 
@@ -640,7 +689,7 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!strategicGoal) {
+    if (!selectedRisk && !strategicGoal) {
       alert('الرجاء اختيار الغاية الاستراتيجية للخطر');
       return;
     }
@@ -670,7 +719,8 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
       location,
       customResponsible: formData.customResponsible,
       semester: formData.semester,
-      strategicGoal,
+      strategicGoal: selectedRisk ? (selectedRiskStrategicGoals[0] || '') : strategicGoal,
+      strategicGoalsList: selectedRisk ? selectedRiskStrategicGoals : (strategicGoal ? [strategicGoal] : []),
       causes: finalCauses,
       responseActions: finalResponseActions,
       preventiveActions: finalPreventiveActions,
@@ -795,41 +845,62 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
           </div>
 
           {/* الغاية الاستراتيجية */}
-          <div className="border border-gray-200 rounded-2xl bg-white overflow-hidden">
-            <button
-              type="button"
-              onClick={() => toggleSection('strategicGoals')}
-              className="w-full px-5 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-3 text-right">
-                <Target size={20} className="text-blue-600" />
-                <h4 className="text-xl font-bold text-gray-800">
-                  الغاية الاستراتيجية التي يؤثر بها الخطر <span className="text-red-500">*</span>
-                </h4>
-              </div>
-              <div className="flex items-center gap-3 text-gray-500">
-                {expandedSections.strategicGoals ? <ChevronDown size={22} /> : <ChevronLeft size={22} />}
-              </div>
-            </button>
+          {selectedRisk && (
+            <div className="border border-gray-200 rounded-2xl bg-white overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleSection('strategicGoals')}
+                className="w-full px-5 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-3 text-right">
+                  <Target size={20} className="text-blue-600" />
+                  <h4 className="text-xl font-bold text-gray-800">
+                    الغاية الاستراتيجية التي يؤثر بها الخطر <span className="text-red-500">*</span>
+                  </h4>
+                </div>
+                <div className="flex items-center gap-3 text-gray-500">
+                  {expandedSections.strategicGoals ? <ChevronDown size={22} /> : <ChevronLeft size={22} />}
+                </div>
+              </button>
 
-            {expandedSections.strategicGoals && (
-              <div className="border-t border-gray-200 p-5 space-y-3 bg-gray-50">
-                <select
-                  value={strategicGoal}
-                  onChange={e => setStrategicGoal(e.target.value)}
-                  className="w-full px-4 py-4 rounded-xl border bg-white text-right font-semibold"
-                  required
-                >
-                  <option value="">اختر الغاية الاستراتيجية</option>
-                  {strategicGoalOptions.map((goal, index) => (
-                    <option key={`${goal}-${index}`} value={goal}>
-                      {goal}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
+              {expandedSections.strategicGoals && (
+                <div className="border-t border-gray-200 p-5 space-y-3 bg-gray-50 text-right">
+                  {selectedRisk ? (
+                    <div className="space-y-2">
+                      {selectedRiskStrategicGoals.map((goal, index) => (
+                        <div
+                          key={`${goal}-${index}`}
+                          className="bg-white border border-gray-200 rounded-xl px-5 py-4 font-bold text-gray-800 text-right shadow-sm flex items-center justify-between gap-3"
+                        >
+                          <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center text-[#105a9e]">
+                            <Check size={12} className="stroke-[3]" />
+                          </div>
+                          <span className="flex-1 text-base">{goal}</span>
+                        </div>
+                      ))}
+                      {selectedRiskStrategicGoals.length === 0 && (
+                        <div className="text-gray-400 text-sm py-4 text-center">لا توجد غايات استراتيجية مرتبطة بهذا الخطر</div>
+                      )}
+                    </div>
+                  ) : (
+                    <select
+                      value={strategicGoal}
+                      onChange={e => setStrategicGoal(e.target.value)}
+                      className="w-full px-4 py-4 rounded-xl border bg-white text-right font-semibold"
+                      required
+                    >
+                      <option value="">اختر الغاية الاستراتيجية</option>
+                      {strategicGoalOptions.map((goal, index) => (
+                        <option key={`${goal}-${index}`} value={goal}>
+                          {goal}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* تقييم الخطر */}
           <div className="p-6 md:p-8 bg-gray-50 rounded-2xl space-y-6 border border-gray-100">
@@ -901,9 +972,9 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="flex items-center justify-end gap-2 mb-3 text-right font-semibold">
-                  <span>الجهة المسؤولة عن معالجة الخطر</span>
+                <label className="flex items-center justify-start gap-2 mb-3 text-right font-semibold">
                   <Building2 size={18} className="text-gray-500" />
+                  <span>الجهة المسؤولة عن معالجة الخطر</span>
                 </label>
                 <select
                   value={responsibleId}
@@ -921,15 +992,15 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
               </div>
 
               <div>
-                <label className="flex items-center justify-end gap-2 mb-3 text-right font-semibold">
-                  <span>الشخص المسؤول</span>
+                <label className="flex items-center justify-start gap-2 mb-3 text-right font-semibold">
                   <User size={18} className="text-gray-500" />
+                  <span>الشخص المسؤول</span>
                 </label>
                 <select
                   value={responsibleId}
-                  disabled={disabled || isLoadingMasterData}
+                  disabled={true}
                   onChange={e => setResponsibleId(e.target.value)}
-                  className="w-full px-4 py-4 rounded-xl border bg-gray-50 text-right"
+                  className="w-full px-4 py-4 rounded-xl border bg-gray-100 text-gray-700 cursor-not-allowed text-right font-semibold"
                 >
                   <option value="">اختر الشخص المسؤول</option>
                   {responsibleEntities.map(item => (
@@ -941,9 +1012,9 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
               </div>
 
               <div>
-                <label className="flex items-center justify-end gap-2 mb-3 text-right font-semibold">
-                  <span>رقم الهاتف</span>
+                <label className="flex items-center justify-start gap-2 mb-3 text-right font-semibold">
                   <Phone size={18} className="text-gray-500" />
+                  <span>رقم الهاتف</span>
                 </label>
                 <input
                   readOnly
@@ -954,9 +1025,9 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
               </div>
 
               <div>
-                <label className="flex items-center justify-end gap-2 mb-3 text-right font-semibold">
-                  <span>البريد الإلكتروني</span>
+                <label className="flex items-center justify-start gap-2 mb-3 text-right font-semibold">
                   <Mail size={18} className="text-gray-500" />
+                  <span>البريد الإلكتروني</span>
                 </label>
                 <input
                   readOnly
@@ -988,9 +1059,9 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
               </div>
 
               <div>
-                <label className="flex items-center justify-end gap-2 mb-3 text-right font-semibold">
-                  <span>مكان الخطر</span>
+                <label className="flex items-center justify-start gap-2 mb-3 text-right font-semibold">
                   <MapPin size={18} className="text-gray-500" />
+                  <span>مكان الخطر</span>
                 </label>
                 <input
                   value={location}

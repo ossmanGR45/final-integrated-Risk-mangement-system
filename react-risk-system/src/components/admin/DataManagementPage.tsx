@@ -42,6 +42,30 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // States for Strategic Goal's Risk Connections (دليل المخاطر)
+  const [allRisks, setAllRisks] = useState<CatalogItem[]>([]);
+  const [selectedRiskIds, setSelectedRiskIds] = useState<number[]>([]);
+  const [riskSearchQuery, setRiskSearchQuery] = useState('');
+  const [isFetchingRisks, setIsFetchingRisks] = useState(false);
+
+  // Fetch standard risks
+  const fetchStandardRisks = async () => {
+    try {
+      setIsFetchingRisks(true);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE}/risk?custom=false&include=RiskActions.Action,RiskCauses.Cause,RiskGoals.StrategicGoal`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('فشل تحميل سجل المخاطر القياسية');
+      const data = await response.json();
+      setAllRisks(Array.isArray(data) ? data : []);
+    } catch (error: any) {
+      console.error(error);
+    } finally {
+      setIsFetchingRisks(false);
+    }
+  };
+
   // Modals & Forms States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -270,6 +294,9 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
   useEffect(() => {
     fetchItems();
     setIsRiskFormActive(false);
+    if (type === 'strategicGoal' || type === 'cause' || type === 'responseAction' || type === 'preventiveAction') {
+      fetchStandardRisks();
+    }
   }, [type]);
 
   const filteredItems = useMemo(() => {
@@ -278,6 +305,25 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
       return Object.values(item).some(val => String(val).toLowerCase().includes(q));
     });
   }, [items, searchQuery]);
+
+  const filteredRisksForGoal = useMemo(() => {
+    return allRisks.filter(risk => {
+      const q = riskSearchQuery.toLowerCase().trim();
+      if (!q) return true;
+      return (
+        String(risk.riskName || '').toLowerCase().includes(q) ||
+        String(risk.id).includes(q) ||
+        String(risk.department || '').toLowerCase().includes(q) ||
+        String(risk.categoryName || '').toLowerCase().includes(q)
+      );
+    });
+  }, [allRisks, riskSearchQuery]);
+
+  const handleToggleRiskConnection = (riskId: number) => {
+    setSelectedRiskIds(prev =>
+      prev.includes(riskId) ? prev.filter(id => id !== riskId) : [...prev, riskId]
+    );
+  };
 
   const handleOpenAdd = () => {
     if (type === 'risk') {
@@ -320,6 +366,33 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
       return;
     }
 
+    if (type === 'strategicGoal') {
+      const connectedIds = allRisks.filter((risk: any) => {
+        const goals = risk.riskGoals || risk.RiskGoals || [];
+        return goals.some((rg: any) => rg.strategicGoalId === item.id || rg.strategicGoal?.id === item.id);
+      }).map((risk: any) => risk.id);
+      setSelectedRiskIds(connectedIds);
+      setRiskSearchQuery('');
+    }
+
+    if (type === 'cause') {
+      const connectedIds = allRisks.filter((risk: any) => {
+        const causes = risk.riskCauses || [];
+        return causes.some((rc: any) => rc.causeId === item.id || rc.cause?.id === item.id);
+      }).map((risk: any) => risk.id);
+      setSelectedRiskIds(connectedIds);
+      setRiskSearchQuery('');
+    }
+
+    if (type === 'responseAction' || type === 'preventiveAction') {
+      const connectedIds = allRisks.filter((risk: any) => {
+        const actions = risk.riskActions || [];
+        return actions.some((ra: any) => ra.actionId === item.id || ra.action?.id === item.id);
+      }).map((risk: any) => risk.id);
+      setSelectedRiskIds(connectedIds);
+      setRiskSearchQuery('');
+    }
+
     config.setEditFormValues(item);
     setIsEditModalOpen(true);
   };
@@ -344,6 +417,105 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
       if (!response.ok) {
         const err = await response.json();
         throw new Error(err.message || 'فشل حفظ التعديلات');
+      }
+
+      if (isEdit && (type === 'strategicGoal' || type === 'cause' || type === 'responseAction' || type === 'preventiveAction') && selectedItem) {
+        const itemId = selectedItem.id;
+
+        // Helper: build standard risk payload preserving existing connections and updating one connection type
+        const buildRiskPayload = (
+          risk: any,
+          updatedGoals: { id: number }[],
+          updatedCauses: ({ id: number } | { causeDescription: string })[],
+          updatedActions: ({ id: number; actionType: number } | { actionDescription: string; actionType: number })[]
+        ) => ({
+          id: risk.id,
+          department: risk.department,
+          riskName: risk.riskName,
+          riskDescription: risk.riskDescription,
+          categoryName: risk.categoryName || risk.category?.categoryName || '',
+          likelihood: risk.likelihood,
+          impact: risk.impact,
+          responsibleId: risk.responsibleId || risk.responsible?.id || null,
+          location: risk.location,
+          status: 3,
+          actions: updatedActions,
+          causes: updatedCauses,
+          strategicGoals: updatedGoals
+        });
+
+        for (const risk of allRisks) {
+          let changed = false;
+
+          // --- Current mapped lists (always preserve) ---
+          const mappedGoals = (risk.riskGoals || risk.RiskGoals || []).map((rg: any) => {
+            const id = rg.strategicGoalId || rg.strategicGoal?.id;
+            return id ? { id } : null;
+          }).filter((g: any): g is { id: number } => g !== null);
+
+          const mappedCauses = (risk.riskCauses || []).map((rc: any) => {
+            const id = rc.causeId || rc.cause?.id;
+            return id ? { id } : { causeDescription: rc.causeDescription || rc.cause?.causeDescription || '' };
+          }).filter((c: any) => c.id || c.causeDescription);
+
+          const mappedActions = (risk.riskActions || []).map((ra: any) => {
+            const id = ra.actionId || ra.action?.id;
+            const typeVal = ra.action?.actionType !== undefined ? ra.action.actionType : (ra.actionType === 'Reduction' ? 1 : 0);
+            return id ? { id, actionType: typeVal } : { actionDescription: ra.actionDescription || ra.action?.actionDescription || '', actionType: typeVal };
+          }).filter((a: any) => a.id || a.actionDescription);
+
+          let updatedGoals = mappedGoals;
+          let updatedCauses = mappedCauses;
+          let updatedActions = mappedActions;
+
+          if (type === 'strategicGoal') {
+            const wasConnected = mappedGoals.some((g: any) => g.id === itemId);
+            const nowConnected = selectedRiskIds.includes(risk.id);
+            if (wasConnected !== nowConnected) {
+              changed = true;
+              updatedGoals = nowConnected
+                ? [...mappedGoals.filter((g: any) => g.id !== itemId), { id: itemId }]
+                : mappedGoals.filter((g: any) => g.id !== itemId);
+            }
+          }
+
+          if (type === 'cause') {
+            const wasConnected = (risk.riskCauses || []).some((rc: any) => rc.causeId === itemId || rc.cause?.id === itemId);
+            const nowConnected = selectedRiskIds.includes(risk.id);
+            if (wasConnected !== nowConnected) {
+              changed = true;
+              updatedCauses = nowConnected
+                ? [...mappedCauses.filter((c: any) => c.id !== itemId), { id: itemId }]
+                : mappedCauses.filter((c: any) => c.id !== itemId);
+            }
+          }
+
+          if (type === 'responseAction' || type === 'preventiveAction') {
+            const wasConnected = (risk.riskActions || []).some((ra: any) => ra.actionId === itemId || ra.action?.id === itemId);
+            const nowConnected = selectedRiskIds.includes(risk.id);
+            if (wasConnected !== nowConnected) {
+              changed = true;
+              const actionType = type === 'responseAction' ? 1 : 0;
+              updatedActions = nowConnected
+                ? [...mappedActions.filter((a: any) => a.id !== itemId), { id: itemId, actionType }]
+                : mappedActions.filter((a: any) => a.id !== itemId);
+            }
+          }
+
+          if (changed) {
+            const riskPayload = buildRiskPayload(risk, updatedGoals, updatedCauses, updatedActions);
+            const updateRes = await fetch(`${API_BASE}/risk/addUpdate`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify(riskPayload)
+            });
+            if (!updateRes.ok) {
+              const err = await updateRes.json();
+              throw new Error(err.message || `فشل تحديث الخطر القياسي: ${risk.riskName}`);
+            }
+          }
+        }
+        await fetchStandardRisks();
       }
 
       showNotification('تم حفظ البيانات بنجاح', 'success');
@@ -572,7 +744,7 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
       {/* Edit Modal */}
       {isEditModalOpen && selectedItem && (
         <div className="fixed inset-0 bg-black/50 z-[150] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]">
+          <div className={`bg-white w-full ${(type === 'strategicGoal' || type === 'cause' || type === 'responseAction' || type === 'preventiveAction') ? 'max-w-4xl' : 'max-w-lg'} rounded-3xl shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]`}>
             <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-5 flex items-center justify-between">
               <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
                 <span>تعديل العنصر</span>
@@ -591,14 +763,114 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
             </div>
 
             <form onSubmit={(e) => handleSubmit(e, true)} className="p-6 space-y-4 overflow-y-auto">
-              {renderFormFields(type, {
-                categoryForm, setCategoryForm,
-                departmentForm, setDepartmentForm,
-                strategicGoalForm, setStrategicGoalForm,
-                causeForm, setCauseForm,
-                actionForm, setActionForm,
-                responsibleForm, setResponsibleForm
-              })}
+              {(type === 'strategicGoal' || type === 'cause' || type === 'responseAction' || type === 'preventiveAction') ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-semibold">
+                  {/* Right Column: Item Description */}
+                  <div className="space-y-4 text-right">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        {type === 'strategicGoal' ? 'وصف الغاية الاستراتيجية *'
+                          : type === 'cause' ? 'وصف مسبب الخطر *'
+                          : 'وصف الإجراء القياسي *'}
+                      </label>
+                      <textarea
+                        required
+                        rows={6}
+                        placeholder={type === 'strategicGoal' ? 'أدخل وصفاً للغاية الاستراتيجية...' : type === 'cause' ? 'أدخل مسبب أو عامل الخطر...' : 'أدخل تفاصيل الإجراء القياسي...'}
+                        value={
+                          type === 'strategicGoal' ? strategicGoalForm.goalDescription
+                          : type === 'cause' ? causeForm.causeDescription
+                          : actionForm.actionDescription
+                        }
+                        onChange={(e) => {
+                          if (type === 'strategicGoal') setStrategicGoalForm({ goalDescription: e.target.value });
+                          else if (type === 'cause') setCauseForm({ causeDescription: e.target.value });
+                          else setActionForm({ actionDescription: e.target.value });
+                        }}
+                        className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-right focus:border-blue-500 focus:outline-none transition-colors text-base"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Left Column: Risk connections */}
+                  <div className="space-y-4 border-r border-gray-100 pr-0 md:pr-6 text-right">
+                    <div>
+                      <h4 className="text-base font-black text-gray-900 mb-1">ارتباطات دليل المخاطر القياسية</h4>
+                      <p className="text-xs text-gray-500 mb-3 font-semibold">
+                        {type === 'strategicGoal' ? 'اختر المخاطر التي ترتبط بهذه الغاية الاستراتيجية أو ألغِ ارتباطها'
+                          : type === 'cause' ? 'اختر المخاطر التي يرتبط بها هذا السبب أو ألغِ ارتباطها'
+                          : 'اختر المخاطر التي يرتبط بها هذا الإجراء أو ألغِ ارتباطها'}
+                      </p>
+
+                      {/* Search */}
+                      <div className="relative mb-3">
+                        <input
+                          type="text"
+                          placeholder="ابحث عن خطر باسمه أو قسمه..."
+                          value={riskSearchQuery}
+                          onChange={(e) => setRiskSearchQuery(e.target.value)}
+                          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-right text-sm focus:border-blue-500 focus:outline-none transition-colors"
+                        />
+                        <Search className="absolute right-3.5 top-3 text-gray-400" size={16} />
+                      </div>
+
+                      {/* Risks List */}
+                      <div className="max-h-[300px] overflow-y-auto space-y-2 border border-gray-100 rounded-2xl p-3 bg-slate-50/50">
+                        {isFetchingRisks ? (
+                          <div className="text-center py-8 text-gray-400 text-sm">جاري تحميل دليل المخاطر القياسية...</div>
+                        ) : filteredRisksForGoal.length === 0 ? (
+                          <div className="text-center py-8 text-gray-400 text-sm">لا توجد مخاطر قياسية مطابقة</div>
+                        ) : (
+                          filteredRisksForGoal.map((risk) => {
+                            const isConnected = selectedRiskIds.includes(risk.id);
+                            return (
+                              <button
+                                key={risk.id}
+                                type="button"
+                                onClick={() => handleToggleRiskConnection(risk.id)}
+                                className={`w-full text-right p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                                  isConnected
+                                    ? 'bg-blue-50/80 border-blue-200 shadow-sm'
+                                    : 'bg-white border-gray-200 hover:border-gray-300'
+                                }`}
+                              >
+                                <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
+                                  isConnected
+                                    ? 'bg-[#105a9e] border-[#105a9e] text-white'
+                                    : 'border-gray-300 bg-white'
+                                }`}>
+                                  {isConnected && <Check size={14} className="stroke-[3]" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-bold text-gray-900 text-sm truncate">{risk.riskName}</div>
+                                  <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-500 font-semibold">
+                                    <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded">رقم: {risk.id}</span>
+                                    {risk.department && (
+                                      <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded truncate max-w-[120px]">{risk.department}</span>
+                                    )}
+                                    {risk.categoryName && (
+                                      <span className="bg-blue-50 text-[#105a9e] px-2 py-0.5 rounded truncate max-w-[100px]">{risk.categoryName}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                renderFormFields(type, {
+                  categoryForm, setCategoryForm,
+                  departmentForm, setDepartmentForm,
+                  strategicGoalForm, setStrategicGoalForm,
+                  causeForm, setCauseForm,
+                  actionForm, setActionForm,
+                  responsibleForm, setResponsibleForm
+                })
+              )}
 
               {/* Submit Buttons */}
               <div className="flex gap-3 pt-4 border-t border-gray-100">

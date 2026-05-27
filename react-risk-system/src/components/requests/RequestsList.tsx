@@ -42,7 +42,13 @@ interface ApiRequest {
     userName?: string | null;
   } | null;
   requestActions?: Array<{
-    action?: { actionDescription?: string | null } | null;
+    action?: { actionDescription?: string | null; actionType?: number | string | null } | null;
+  }> | null;
+  requestCauses?: Array<{
+    cause?: { causeDescription?: string | null } | null;
+  }> | null;
+  requestGoals?: Array<{
+    strategicGoal?: { goalDescription?: string | null } | null;
   }> | null;
 }
 
@@ -62,9 +68,15 @@ interface WorkflowRequest {
   postScore?: number;
   responsiblePerson: string;
   responsibleId?: number | null;
+  riskId?: number | null;
   customResponsible?: string;
   semester: 'first' | 'second' | 'summer';
   mitigationActions: string[];
+  causes: string[];
+  responseActions: string[];
+  preventiveActions: string[];
+  strategicGoal?: string;
+  strategicGoalsList?: string[];
   submittedBy: string;
   status: UiStatus;
   rawStatus: number;
@@ -115,10 +127,28 @@ const adapt = (r: ApiRequest): WorkflowRequest => {
     responsiblePerson:
       r.responsible?.contactName || r.responsible?.entityName || '',
     responsibleId: r.responsibleId ?? null,
+    riskId: r.riskId ?? null,
     customResponsible: '',
     semester: 'first',
     mitigationActions: (r.requestActions || [])
       .map(rm => rm?.action?.actionDescription || '')
+      .filter(Boolean),
+    causes: (r.requestCauses || [])
+      .map(rc => rc?.cause?.causeDescription || '')
+      .filter(Boolean),
+    responseActions: (r.requestActions || [])
+      .filter(rm => rm?.action?.actionType === 1 || rm?.action?.actionType === 'Reduction')
+      .map(rm => rm?.action?.actionDescription || '')
+      .filter(Boolean),
+    preventiveActions: (r.requestActions || [])
+      .filter(rm => rm?.action?.actionType === 0 || rm?.action?.actionType === 'Avoidance')
+      .map(rm => rm?.action?.actionDescription || '')
+      .filter(Boolean),
+    strategicGoal: (r.requestGoals || [])
+      .map(rg => rg?.strategicGoal?.goalDescription || '')
+      .filter(Boolean)[0] || '',
+    strategicGoalsList: (r.requestGoals || [])
+      .map(rg => rg?.strategicGoal?.goalDescription || '')
       .filter(Boolean),
     submittedBy: r.user?.userName || '',
     status: uiStatusFromApi(r.status ?? null),
@@ -176,10 +206,29 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
     postImpact: req.postImpact ?? null,
     occured: req.mode === 'after',
     responsibleId: req.responsibleId ?? null,
-    riskId: null,
-    causes: [],
-    actions: [],
-    strategicGoals: [],
+    riskId: req.riskId ?? null,
+    causes: (req.causes || []).map((cause: string) => ({
+      id: 0,
+      causeDescription: cause,
+      custom: true,
+    })),
+    actions: [
+      ...(req.responseActions || []).map((action: string) => ({
+        id: 0,
+        actionDescription: action,
+        actionType: 1,
+        custom: true,
+      })),
+      ...(req.preventiveActions || []).map((action: string) => ({
+        id: 0,
+        actionDescription: action,
+        actionType: 0,
+        custom: true,
+      })),
+    ],
+    strategicGoals: req.strategicGoalsList && req.strategicGoalsList.length > 0
+      ? req.strategicGoalsList.map((g: string) => ({ id: 0, goalDescription: g }))
+      : (req.strategicGoal ? [{ id: 0, goalDescription: req.strategicGoal }] : []),
     ...overrides,
   });
 
@@ -187,7 +236,8 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
     try {
       setIsLoading(true);
       const pendingFlag = mode === 'pending' ? 'true' : 'false';
-      const url = `${API_BASE}/requests?pending=${pendingFlag}&include=Risk`;
+      const includes = encodeURIComponent('Risk,RequestCauses.Cause,RequestActions.Action,RequestGoals.StrategicGoal');
+      const url = `${API_BASE}/requests?pending=${pendingFlag}&include=${includes}`;
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -635,6 +685,11 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
                 customResponsible: selectedRequest.customResponsible ?? '',
                 semester: selectedRequest.semester,
                 mitigationActions: selectedRequest.mitigationActions,
+                causes: selectedRequest.causes,
+                responseActions: selectedRequest.responseActions,
+                preventiveActions: selectedRequest.preventiveActions,
+                strategicGoal: selectedRequest.strategicGoal,
+                strategicGoalsList: selectedRequest.strategicGoalsList,
               }}
               disabled={!canEditRejected}
               title="تفاصيل الطلب"

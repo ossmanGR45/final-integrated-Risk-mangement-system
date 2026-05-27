@@ -166,9 +166,9 @@ const DashboardLayout = () => {
                             custom: true,
                           })),
                         ],
-                        strategicGoals: data.strategicGoal
-                          ? [{ id: 0, goalDescription: data.strategicGoal }]
-                          : [],
+                        strategicGoals: data.strategicGoalsList && data.strategicGoalsList.length > 0
+                          ? data.strategicGoalsList.map((g: string) => ({ id: 0, goalDescription: g }))
+                          : (data.strategicGoal ? [{ id: 0, goalDescription: data.strategicGoal }] : []),
                       };
 
                       const response = await fetch(`${API_BASE}/requests/addUpdate`, {

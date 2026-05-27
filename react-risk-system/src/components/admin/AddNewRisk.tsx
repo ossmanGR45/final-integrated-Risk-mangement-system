@@ -371,9 +371,11 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       riskName: initialData.riskName ?? '',
       riskDescription: initialData.riskDescription ?? '',
       categoryID:
-        initialData.categoryID !== undefined && initialData.categoryID !== null
+        initialData.categoryID !== undefined && initialData.categoryID !== null && String(initialData.categoryID) !== ''
           ? String(initialData.categoryID)
-          : '',
+          : (initialData.categoryName && categories.length > 0
+              ? String(categories.find(c => (c.categoryName || '').trim().toLowerCase() === initialData.categoryName?.trim().toLowerCase())?.id || '')
+              : ''),
       likelihood:
         typeof initialData.likelihood === 'number' && initialData.likelihood > 0
           ? initialData.likelihood
@@ -413,6 +415,22 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
         : []
     );
   }, [initialData]);
+
+  // Resolve categoryID from categoryName if categories list is loaded/updated later
+  useEffect(() => {
+    const catName = initialData?.categoryName?.trim().toLowerCase();
+    if (catName && !riskForm.categoryID && categories.length > 0) {
+      const foundCat = categories.find(
+        c => (c.categoryName || '').trim().toLowerCase() === catName
+      );
+      if (foundCat) {
+        setRiskForm(prev => ({
+          ...prev,
+          categoryID: String(foundCat.id)
+        }));
+      }
+    }
+  }, [categories, initialData, riskForm.categoryID]);
 
   useEffect(() => {
     setActiveTab(initialTab);

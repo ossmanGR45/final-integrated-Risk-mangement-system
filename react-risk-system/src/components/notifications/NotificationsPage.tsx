@@ -360,24 +360,24 @@ const NotificationsPage: React.FC = () => {
                     {isExpanded && (
                       <div className="pt-4 border-t border-gray-100 mt-4 space-y-4 text-right">
                         <div className="bg-gray-50 rounded-2xl p-5 border text-sm text-gray-700">
-                          <div className="flex justify-between items-center py-3 border-b border-gray-200/50 last:border-b-0">
-                            <span className="text-gray-500">رقم الطلب</span>
+                          <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
+                            <span className="text-gray-500 w-32 shrink-0 text-right">رقم الطلب</span>
                             <span className="font-bold text-gray-900">#{item.requestId}</span>
                           </div>
-                          <div className="flex justify-between items-center py-3 border-b border-gray-200/50 last:border-b-0">
-                            <span className="text-gray-500">نوع الطلب</span>
+                          <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
+                            <span className="text-gray-500 w-32 shrink-0 text-right">نوع الطلب</span>
                             <span className="font-bold text-gray-900">
                               {REQUEST_TYPE_LABEL[item.requestType]}
                             </span>
                           </div>
-                          <div className="flex justify-between items-center py-3 border-b border-gray-200/50 last:border-b-0">
-                            <span className="text-gray-500">الحالة</span>
+                          <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
+                            <span className="text-gray-500 w-32 shrink-0 text-right">الحالة</span>
                             <span className="font-bold text-gray-900">
                               {NOTIFICATION_STATUS_LABEL[item.status ?? 0] || 'تم التعديل'}
                             </span>
                           </div>
-                          <div className="flex justify-between items-center py-3 border-b border-gray-200/50 last:border-b-0">
-                            <span className="text-gray-500">تاريخ الإنشاء</span>
+                          <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
+                            <span className="text-gray-500 w-32 shrink-0 text-right">تاريخ الإنشاء</span>
                             <span className="font-bold text-gray-900">
                               {new Date(item.createdAt).toLocaleString('ar-EG', {
                                 dateStyle: 'long',
