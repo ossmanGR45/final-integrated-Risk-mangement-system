@@ -660,9 +660,9 @@ const Dashboard: React.FC = () => {
                   <Target size={30} />
                 </div>
                 <div className="flex-1 text-right">
-                  <div className="flex items-center justify-end gap-3 mb-2">
-                    <span className="bg-white/15 text-white text-sm px-3 py-1 rounded-full font-bold">{totalStrategicGoals} غاية</span>
+                  <div className="flex items-center justify-start gap-3 mb-2">
                     <Sparkles size={18} />
+                    <span className="bg-white/15 text-white text-sm px-3 py-1 rounded-full font-bold">{totalStrategicGoals} غاية</span>
                   </div>
                   <h2 className="text-2xl md:text-3xl font-black">الغايات الإستراتيجية</h2>
                   <p className="text-blue-100 mt-2 text-sm md:text-base">انقر لعرض الغايات الإستراتيجية والأخطار الواقعة عليها</p>
@@ -1109,9 +1109,9 @@ const Dashboard: React.FC = () => {
           <div className="bg-white w-full max-w-6xl rounded-3xl shadow-2xl max-h-[90vh] overflow-hidden">
             <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-5 flex items-center justify-between">
               <div className="text-right">
-                <div className="flex items-center justify-end gap-2 mb-1">
-                  <span className="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full font-bold">{selectedGoalRisks.length} خطر</span>
+                <div className="flex items-center justify-start gap-2 mb-1">
                   <Target size={18} className="text-blue-600" />
+                  <span className="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full font-bold">{selectedGoalRisks.length} خطر</span>
                 </div>
                 <h3 className="text-2xl font-black text-gray-900">{selectedGoal.title}</h3>
                 <p className="text-gray-500 mt-1">اضغط على أي خطر لعرض تفاصيله الكاملة</p>

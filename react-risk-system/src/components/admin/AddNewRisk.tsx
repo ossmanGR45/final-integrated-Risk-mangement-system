@@ -1636,7 +1636,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
 
                   <div className="grid grid-cols-3 gap-4 text-right">
                     <div className="bg-white rounded-xl p-4 border">
-                      <div className="flex items-center justify-end gap-2 text-gray-500 mb-2">
+                      <div className="flex items-center justify-start gap-2 text-gray-500 mb-2">
                         <User size={16} />
                         <span>الشخص المسؤول</span>
                       </div>
@@ -1644,7 +1644,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
                     </div>
 
                     <div className="bg-white rounded-xl p-4 border">
-                      <div className="flex items-center justify-end gap-2 text-gray-500 mb-2">
+                      <div className="flex items-center justify-start gap-2 text-gray-500 mb-2">
                         <Phone size={16} />
                         <span>وسائل الاتصال</span>
                       </div>
@@ -1652,7 +1652,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
                     </div>
 
                     <div className="bg-white rounded-xl p-4 border">
-                      <div className="flex items-center justify-end gap-2 text-gray-500 mb-2">
+                      <div className="flex items-center justify-start gap-2 text-gray-500 mb-2">
                         <Mail size={16} />
                         <span>البريد الإلكتروني</span>
                       </div>

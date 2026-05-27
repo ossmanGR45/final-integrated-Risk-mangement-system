@@ -299,16 +299,9 @@ const RiskInquiryPage: React.FC = () => {
   };
 
   const clearFilters = () => {
-    setSelectedCategory(null);
     setSearchTerm('');
     setRiskTypeFilter('');
     setSortBy('latest');
-  };
-
-  const toArray = (value?: string[] | null) => {
-    if (!value) return [];
-    if (Array.isArray(value)) return value.filter(Boolean);
-    return [];
   };
 
   const processedRisks = useMemo(() => {
@@ -344,35 +337,6 @@ const RiskInquiryPage: React.FC = () => {
 
     return result;
   }, [allRisks, selectedCategory, searchTerm, riskTypeFilter, sortBy]);
-
-  const renderListSection = (
-    title: string,
-    items: string[],
-    icon: React.ReactNode,
-    emptyText: string
-  ) => (
-    <div className="bg-gray-50 rounded-xl p-6">
-      <h4 className="text-lg font-bold text-right mb-4 flex items-center justify-end gap-2">
-        {icon}
-        {title}
-      </h4>
-
-      {items.length > 0 ? (
-        <ul className="space-y-3 text-right">
-          {items.map((item, index) => (
-            <li
-              key={`${title}-${index}`}
-              className="text-gray-700 leading-relaxed border-b border-gray-200 pb-3 last:border-b-0 last:pb-0"
-            >
-              - {item}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-gray-500 text-right">{emptyText}</p>
-      )}
-    </div>
-  );
 
   const selectedCategoryName =
     categories.find(category => category.id === selectedCategory)?.categoryName || '';
@@ -423,25 +387,22 @@ const RiskInquiryPage: React.FC = () => {
                 <button
                   key={category.id}
                   onClick={() => handleCategoryClick(category.id)}
-                  className={`p-6 rounded-2xl border-2 transition-all text-right ${
-                    isSelected
+                  className={`p-6 rounded-2xl border-2 transition-all text-right ${isSelected
                       ? 'border-blue-600 bg-blue-50 shadow-md'
                       : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        isSelected ? 'bg-blue-600' : 'bg-gray-100'
-                      }`}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-gray-100'
+                        }`}
                     >
                       <AlertCircle className={isSelected ? 'text-white' : 'text-gray-600'} size={22} />
                     </div>
 
                     <div
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        isSelected ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
-                      }`}
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${isSelected ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                        }`}
                     >
                       {risksCount} خطر
                     </div>
@@ -464,13 +425,15 @@ const RiskInquiryPage: React.FC = () => {
               </h2>
             </div>
 
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 flex items-center gap-2"
-            >
-              <Filter size={18} className="text-gray-500" />
-              <span>مسح الفلاتر</span>
-            </button>
+            {(searchTerm !== '' || sortBy !== 'latest' || riskTypeFilter !== '') && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 flex items-center gap-2"
+              >
+                <Filter size={18} className="text-gray-500" />
+                <span>مسح الفلاتر</span>
+              </button>
+            )}
           </div>
 
           <div className="relative">
@@ -487,24 +450,11 @@ const RiskInquiryPage: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <select
-              value={selectedCategory ?? ''}
-              onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : null)}
-              className="border rounded-xl px-4 py-4 text-right bg-white"
-            >
-              <option value="">كل الفئات</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {category.categoryName}
-                </option>
-              ))}
-            </select>
-
+          <div>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'latest' | 'name' | 'score-high' | 'score-low')}
-              className="border rounded-xl px-4 py-4 text-right bg-white"
+              className="w-full border rounded-xl px-4 py-4 text-right bg-white"
             >
               <option value="latest">الأحدث</option>
               <option value="name">حسب الاسم</option>

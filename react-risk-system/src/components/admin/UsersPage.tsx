@@ -257,11 +257,11 @@ export default function UsersPage() {
       <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
           <div className="text-right">
-            <div className="flex items-center justify-end gap-3 mb-2">
+            <div className="flex items-center justify-start gap-3 mb-2">
+              <Users size={22} className="text-[#105a9e]" />
               <span className="bg-blue-50 text-[#105a9e] text-sm px-3 py-1 rounded-full font-bold">
                 {users.length} مستخدم
               </span>
-              <Users size={22} className="text-[#105a9e]" />
             </div>
             <h1 className="text-4xl font-black text-gray-900">إدارة المستخدمين</h1>
             <p className="text-gray-500 mt-2">إضافة مستخدمين جدد للنظام، وتعديل صلاحياتهم وأدوارهم الإدارية</p>
