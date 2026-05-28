@@ -117,7 +117,19 @@ namespace QM.Controller
                 filter = filter.And(r => r.Year == year);
 
             if (likelihood.HasValue)
-                filter = filter.And(r => (int)r.Likelihood == likelihood);
+            {
+                int likelyVal = likelihood.Value;
+                if (likelyVal == 1)
+                    filter = filter.And(r => r.Likelihood.HasValue && r.Likelihood.Value < 0.20);
+                else if (likelyVal == 2)
+                    filter = filter.And(r => r.Likelihood.HasValue && r.Likelihood.Value >= 0.20 && r.Likelihood.Value < 0.40);
+                else if (likelyVal == 3)
+                    filter = filter.And(r => r.Likelihood.HasValue && r.Likelihood.Value >= 0.40 && r.Likelihood.Value < 0.60);
+                else if (likelyVal == 4)
+                    filter = filter.And(r => r.Likelihood.HasValue && r.Likelihood.Value >= 0.60 && r.Likelihood.Value < 0.80);
+                else if (likelyVal == 5)
+                    filter = filter.And(r => r.Likelihood.HasValue && r.Likelihood.Value >= 0.80);
+            }
 
             if (impact.HasValue)
                 filter = filter.And(r => (int)r.Impact == impact);

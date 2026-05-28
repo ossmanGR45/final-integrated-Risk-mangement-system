@@ -8,6 +8,7 @@ using QM.DataAccess.Repo.IRepo;
 using QM.Models.DataModels;
 using QM.Models.DTO;
 using QM.Models.Mapping;
+using QM.Services;
 using QM.Utility;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,13 @@ namespace QM.Controller
     [ApiController]
     public class RisksController : BaseController
     {
-        public RisksController(IUnitOfWork uow) : base(uow) { }
+        private readonly RiskLikelihoodUpdateService _likelihoodService;
+
+        public RisksController(IUnitOfWork uow, RiskLikelihoodUpdateService likelihoodService)
+            : base(uow)
+        {
+            _likelihoodService = likelihoodService;
+        }
 
         // ---------------------------------------------------------------
         // Role helpers
@@ -38,6 +45,21 @@ namespace QM.Controller
 
         private bool IsAdmin(string? role) =>
             string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Converts the display integer (1–5) sent by the frontend to the decimal midpoint
+        /// stored in the database. If the value is already a proper decimal (not a whole 1–5),
+        /// it is returned as-is (e.g. a value set by the EWMA job).
+        /// </summary>
+        private static double IntToDecimalLikelihood(double value) => value switch
+        {
+            1.0 => 0.10,
+            2.0 => 0.30,
+            3.0 => 0.50,
+            4.0 => 0.70,
+            5.0 => 0.90,
+            _   => Math.Clamp(value, 0.0, 1.0)  // already a decimal
+        };
 
 
         [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
@@ -110,7 +132,14 @@ namespace QM.Controller
                 filter = filter.And(r => r.Location.Contains(location));
 
             if (likelihood.HasValue)
-                filter = filter.And(r => (int)r.likelihood == likelihood);
+            {
+                // likelihood is stored as a decimal; map the int query param (1–5)
+                // to the same display bucket the frontend uses.
+                int likelyVal = likelihood.Value;
+                filter = filter.And(r =>
+                    r.likelihood.HasValue &&
+                    RiskLikelihoodUpdateService.DecimalToDisplayInt(r.likelihood.Value) == likelyVal);
+            }
 
             if (impact.HasValue)
                 filter = filter.And(r => (int)r.Impact == impact);
@@ -207,7 +236,10 @@ namespace QM.Controller
             risk.Department = dto.Department;
             risk.RiskDescription = dto.RiskDescription;
             risk.Location = dto.Location;
-            risk.likelihood = dto.likelihood;
+            risk.likelihood = dto.likelihood.HasValue
+                ? IntToDecimalLikelihood(dto.likelihood.Value)
+                : null;
+
             risk.Impact = dto.Impact;
             risk.ResponsibleId = dto.ResponsibleId;
             risk.CategoryName = dto.CategoryName;
@@ -414,6 +446,18 @@ namespace QM.Controller
             await _uow.SaveChangesAsync();
 
             return Ok(new { Message = "Deleted successfully." });
+        }
+
+        /// <summary>
+        /// Manually triggers the annual risk likelihood recalculation (Admin only).
+        /// Useful for testing without waiting a full year for the background scheduler.
+        /// </summary>
+        [Authorize(Roles = "Admin")]
+        [HttpPost("recalculate-likelihood")]
+        public async Task<IActionResult> RecalculateLikelihood()
+        {
+            await _likelihoodService.RunUpdateAsync();
+            return Ok(new { Message = "Risk likelihood scores have been recalculated and admins have been notified." });
         }
     }
 }

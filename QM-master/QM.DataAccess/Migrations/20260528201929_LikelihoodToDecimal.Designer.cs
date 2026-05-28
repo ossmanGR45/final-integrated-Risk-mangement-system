@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QM.DataAccess.Data;
 
@@ -11,9 +12,11 @@ using QM.DataAccess.Data;
 namespace QM.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260528201929_LikelihoodToDecimal")]
+    partial class LikelihoodToDecimal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -345,8 +348,8 @@ namespace QM.DataAccess.Migrations
                     b.Property<int?>("Impact")
                         .HasColumnType("int");
 
-                    b.Property<double?>("Likelihood")
-                        .HasColumnType("float");
+                    b.Property<int?>("Likelihood")
+                        .HasColumnType("int");
 
                     b.Property<bool?>("Occured")
                         .HasColumnType("bit");
@@ -354,8 +357,8 @@ namespace QM.DataAccess.Migrations
                     b.Property<int?>("PostImpact")
                         .HasColumnType("int");
 
-                    b.Property<double?>("PostLikelihood")
-                        .HasColumnType("float");
+                    b.Property<int?>("PostLikelihood")
+                        .HasColumnType("int");
 
                     b.Property<bool?>("ReDirected")
                         .HasColumnType("bit");

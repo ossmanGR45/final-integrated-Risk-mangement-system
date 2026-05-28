@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,9 +13,9 @@ namespace QM.Models.DTO
         public string? Department { get; set; }
         public DateTime? Year { get; set; }
         public string? Category { get; set; }
-        public Likelihood? Likelihood { get; set; }
+        public double? Likelihood { get; set; }
         public Impact? Impact { get; set; }
-        public Likelihood? PostLikelihood { get; set; } = null;
+        public double? PostLikelihood { get; set; } = null;
         public Impact? PostImpact { get; set; } = null;
         public DateTime? ExpectedTime { get; set; } = null;
         public string? Description { get; set; } = null;

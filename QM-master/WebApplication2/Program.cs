@@ -8,6 +8,7 @@ using QM.DataAccess.Repo;
 using QM.DataAccess.Repo.IRepo;
 using QM.Middleware;
 using QM.Models.DataModels;
+using QM.Services;
 using System.Text;
 
 
@@ -43,6 +44,13 @@ foreach (var validator in defaultValidator)
 builder.Services.AddTransient<IUserValidator<User>, OptionalUniqueUserNameValidator>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Register the annual risk likelihood background service.
+// Registered as a singleton so both the hosted scheduler and the manual
+// trigger endpoint in RisksController share the same instance.
+builder.Services.AddSingleton<RiskLikelihoodUpdateService>();
+builder.Services.AddHostedService(provider =>
+    provider.GetRequiredService<RiskLikelihoodUpdateService>());
 
 builder.Services.AddAuthentication(options =>
 {

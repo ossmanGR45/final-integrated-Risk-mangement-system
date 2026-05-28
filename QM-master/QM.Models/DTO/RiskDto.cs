@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,8 +14,13 @@ namespace QM.Models.DTO
         public string? RiskName { get; set; } = null;
         public string? RiskDescription { get; set; } = null;
         public string? Location { get; set; } = null;
-        public Likelihood? likelihood { get; set; } = null;
+        /// <summary>
+        /// Accepted as an integer 1–5 from the frontend.
+        /// Stored as a decimal midpoint in the database (1→0.10 … 5→0.90).
+        /// </summary>
+        public double? likelihood { get; set; } = null;
         public Impact? Impact { get; set; } = null;
+
         public bool? ReDirected { get; set; } = null;
         public RequestStatus? Status { get; set; } = null;
 

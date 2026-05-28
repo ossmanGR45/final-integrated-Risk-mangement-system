@@ -430,7 +430,7 @@ const Dashboard: React.FC = () => {
   const trendData = useMemo(() => {
     const buckets: Record<string, { submitted: number; accepted: number; rejected: number }> = {};
     requests.forEach((r: any) => {
-      const raw = r.year || r.Year || r.date;
+      const raw = r.year || r.Year || r.expectedTime || r.ExpectedTime || r.date;
       if (!raw) return;
       const d = new Date(raw);
       if (isNaN(d.getTime())) return;
@@ -473,7 +473,7 @@ const Dashboard: React.FC = () => {
     let latestTerm = 'T1';
 
     requests.forEach((r: any) => {
-      const raw = r.year || r.Year || r.date;
+      const raw = r.year || r.Year || r.expectedTime || r.ExpectedTime || r.date;
       if (!raw) return;
       const d = new Date(raw);
       if (isNaN(d.getTime())) return;
@@ -519,7 +519,7 @@ const Dashboard: React.FC = () => {
     let prevCount = 0;
 
     requests.forEach((r: any) => {
-      const raw = r.year || r.Year || r.date;
+      const raw = r.year || r.Year || r.expectedTime || r.ExpectedTime || r.date;
       if (!raw) return;
       const d = new Date(raw);
       if (isNaN(d.getTime())) return;
