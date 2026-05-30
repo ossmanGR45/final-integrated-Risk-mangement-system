@@ -232,3 +232,22 @@ html[data-theme='dark'] .bg-yellow-50 {
 html[data-theme='dark'] ::-webkit-scrollbar-thumb {
   background: #334155;
 }
+
+/* Style date picker indicator to be larger and easier to click */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(59, 130, 246, 0.15);
+  transform: scale(1.1);
+}
+
+html[data-theme='dark'] input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(96, 165, 250, 0.2);
+}

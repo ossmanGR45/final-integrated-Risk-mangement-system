@@ -61,6 +61,7 @@ const NotificationsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'read'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [rejectionReasons, setRejectionReasons] = useState<Record<number, string>>({});
 
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>(() => {
     try {
@@ -134,11 +135,38 @@ const NotificationsPage: React.FC = () => {
   // Handle highlighted/selected notification from navigation state
   useEffect(() => {
     const state = location.state as { selectedNotificationId?: string } | null;
-    if (state?.selectedNotificationId) {
-      setExpandedId(state.selectedNotificationId);
+    if (state?.selectedNotificationId && notifications.length > 0) {
+      const selectedId = state.selectedNotificationId;
+      setExpandedId(selectedId);
+
+      const foundItem = notifications.find(n => n.id === selectedId);
+      if (foundItem && foundItem.status === 0 && !rejectionReasons[foundItem.requestId]) {
+        const fetchReason = async () => {
+          try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`${API_BASE}/requests?id=${foundItem.requestId}`, {
+              headers: token ? { Authorization: `Bearer ${token}` } : {}
+            });
+            if (response.ok) {
+              const data = await response.json();
+              if (Array.isArray(data) && data.length > 0) {
+                const reason = data[0].rejectReason || 'لم يتم تحديد سبب الرفض';
+                setRejectionReasons(prev => ({
+                  ...prev,
+                  [foundItem.requestId]: reason
+                }));
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching auto-expanded rejection reason:', error);
+          }
+        };
+        fetchReason();
+      }
+
       // Optional: scroll to the element
       setTimeout(() => {
-        const el = document.getElementById(`notification-${state.selectedNotificationId}`);
+        const el = document.getElementById(`notification-${selectedId}`);
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -188,6 +216,50 @@ const NotificationsPage: React.FC = () => {
     setReadNotificationIds(prev => Array.from(new Set([...prev, ...ids])));
   };
 
+  const handleExpand = async (item: NotificationItem) => {
+    const isExpanded = expandedId === item.id;
+    setExpandedId(isExpanded ? null : item.id);
+
+    if (!readNotificationIds.includes(item.id)) {
+      setReadNotificationIds(prev => [...prev, item.id]);
+    }
+
+    if (!isExpanded && item.status === 0 && !rejectionReasons[item.requestId]) {
+      try {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`${API_BASE}/requests?id=${item.requestId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const reason = data[0].rejectReason || 'لم يتم تحديد سبب الرفض';
+            setRejectionReasons(prev => ({
+              ...prev,
+              [item.requestId]: reason
+            }));
+          } else {
+            setRejectionReasons(prev => ({
+              ...prev,
+              [item.requestId]: 'لم يتم العثور على تفاصيل الطلب'
+            }));
+          }
+        } else {
+          setRejectionReasons(prev => ({
+            ...prev,
+            [item.requestId]: 'فشل تحميل سبب الرفض'
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching rejection reason:', error);
+        setRejectionReasons(prev => ({
+          ...prev,
+          [item.requestId]: 'خطأ أثناء الاتصال بالخادم'
+        }));
+      }
+    }
+  };
+
   const getStatusIcon = (status: number | null) => {
     if (status === 0) return <AlertCircle className="text-red-500 w-6 h-6" />;
     if (status === 1) return <CheckCircle2 className="text-green-500 w-6 h-6" />;
@@ -220,7 +292,7 @@ const NotificationsPage: React.FC = () => {
     <div className="bg-gray-50 min-h-[calc(100vh-5rem)] rounded-2xl p-6 md:p-8 space-y-6">
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-2xl p-6 border shadow-sm">
-        <div className="flex items-center gap-4 text-right justify-end md:justify-start w-full md:w-auto">
+        <div className="flex items-center gap-4 text-right justify-start w-full md:w-auto">
           <button
             onClick={() => navigate(-1)}
             className="p-3 hover:bg-gray-100 rounded-xl transition border text-gray-500"
@@ -229,7 +301,7 @@ const NotificationsPage: React.FC = () => {
             <ArrowRight size={20} />
           </button>
           <div>
-            <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3 justify-end">
+            <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3 justify-start">
               <span>مركز الإشعارات</span>
               <Bell className="text-blue-600 w-8 h-8" />
             </h2>
@@ -315,12 +387,7 @@ const NotificationsPage: React.FC = () => {
               <div
                 key={item.id}
                 id={`notification-${item.id}`}
-                onClick={() => {
-                  setExpandedId(isExpanded ? null : item.id);
-                  if (!isRead) {
-                    setReadNotificationIds(prev => [...prev, item.id]);
-                  }
-                }}
+                onClick={() => handleExpand(item)}
                 className={`bg-white rounded-2xl border transition-all duration-350 cursor-pointer shadow-sm hover:shadow-md overflow-hidden ${
                   !isRead ? 'border-r-4 border-r-blue-600' : 'border-r-gray-200'
                 } ${isExpanded ? 'ring-2 ring-blue-500' : ''}`}
@@ -359,32 +426,53 @@ const NotificationsPage: React.FC = () => {
 
                     {isExpanded && (
                       <div className="pt-4 border-t border-gray-100 mt-4 space-y-4 text-right">
-                        <div className="bg-gray-50 rounded-2xl p-5 border text-sm text-gray-700">
-                          <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
-                            <span className="text-gray-500 w-32 shrink-0 text-right">رقم الطلب</span>
-                            <span className="font-bold text-gray-900">#{item.requestId}</span>
+                        <div className={`grid grid-cols-1 ${item.status === 0 ? 'md:grid-cols-2' : ''} gap-5`}>
+                          <div className="bg-gray-50 rounded-2xl p-5 border text-sm text-gray-700">
+                            <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
+                              <span className="text-gray-500 w-32 shrink-0 text-right">رقم الطلب</span>
+                              <span className="font-bold text-gray-900">#{item.requestId}</span>
+                            </div>
+                            <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
+                              <span className="text-gray-500 w-32 shrink-0 text-right">نوع الطلب</span>
+                              <span className="font-bold text-gray-900">
+                                {REQUEST_TYPE_LABEL[item.requestType]}
+                              </span>
+                            </div>
+                            <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
+                              <span className="text-gray-500 w-32 shrink-0 text-right">الحالة</span>
+                              <span className="font-bold text-gray-900">
+                                {NOTIFICATION_STATUS_LABEL[item.status ?? 0] || 'تم التعديل'}
+                              </span>
+                            </div>
+                            <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
+                              <span className="text-gray-500 w-32 shrink-0 text-right">تاريخ الإنشاء</span>
+                              <span className="font-bold text-gray-900">
+                                {new Date(item.createdAt).toLocaleString('ar-EG', {
+                                  dateStyle: 'long',
+                                  timeStyle: 'short'
+                                })}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
-                            <span className="text-gray-500 w-32 shrink-0 text-right">نوع الطلب</span>
-                            <span className="font-bold text-gray-900">
-                              {REQUEST_TYPE_LABEL[item.requestType]}
-                            </span>
-                          </div>
-                          <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
-                            <span className="text-gray-500 w-32 shrink-0 text-right">الحالة</span>
-                            <span className="font-bold text-gray-900">
-                              {NOTIFICATION_STATUS_LABEL[item.status ?? 0] || 'تم التعديل'}
-                            </span>
-                          </div>
-                          <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
-                            <span className="text-gray-500 w-32 shrink-0 text-right">تاريخ الإنشاء</span>
-                            <span className="font-bold text-gray-900">
-                              {new Date(item.createdAt).toLocaleString('ar-EG', {
-                                dateStyle: 'long',
-                                timeStyle: 'short'
-                              })}
-                            </span>
-                          </div>
+
+                          {/* Rejection Reason Card (Only if rejected) */}
+                          {item.status === 0 && (
+                            <div className="bg-red-50 border border-red-100 rounded-2xl p-5 text-right flex flex-col justify-between">
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2 text-red-700 dark:text-red-400 font-bold text-base justify-end">
+                                  <span>سبب الرفض</span>
+                                  <AlertCircle className="w-5 h-5 shrink-0" />
+                                </div>
+                                <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line font-semibold">
+                                  {rejectionReasons[item.requestId] === undefined ? (
+                                    <span className="text-gray-400 dark:text-gray-500 animate-pulse">جاري تحميل سبب الرفض...</span>
+                                  ) : (
+                                    rejectionReasons[item.requestId]
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <button

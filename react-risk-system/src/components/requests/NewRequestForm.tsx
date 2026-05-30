@@ -9,7 +9,6 @@ import {
   Phone,
   Mail,
   MapPin,
-  CalendarDays,
   ClipboardList,
   Siren,
   ShieldCheck,
@@ -779,20 +778,14 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
 
               <div>
                 <label className="block mb-3 text-right font-semibold">التاريخ</label>
-                <div className="relative">
-                  <CalendarDays
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
-                    size={18}
-                  />
-                  <input
-                    type="date"
-                    className="w-full pl-4 pr-12 py-4 rounded-xl border bg-gray-50 text-right"
-                    value={date}
-                    disabled={disabled}
-                    onChange={e => setDate(e.target.value)}
-                    required
-                  />
-                </div>
+                <input
+                  type="date"
+                  className="w-full pl-12 pr-4 py-4 rounded-xl border bg-gray-50 text-right"
+                  value={date}
+                  disabled={disabled}
+                  onChange={e => setDate(e.target.value)}
+                  required
+                />
               </div>
             </div>
           </div>
