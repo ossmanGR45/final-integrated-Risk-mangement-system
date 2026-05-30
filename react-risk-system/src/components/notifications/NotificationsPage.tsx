@@ -51,6 +51,18 @@ const REQUEST_TYPE_LABEL: Record<number, string> = {
 
 const READ_NOTIFICATIONS_STORAGE_KEY = 'readNotificationIds';
 
+const parseApiDate = (dateString: string): Date => {
+  if (!dateString) return new Date();
+  
+  // If the date string doesn't have a timezone specifier (Z or +/-XX:XX), append 'Z' to treat it as UTC
+  let formatted = dateString;
+  if (!dateString.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(dateString)) {
+    formatted = `${dateString}Z`;
+  }
+  
+  return new Date(formatted);
+};
+
 const NotificationsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -99,7 +111,7 @@ const NotificationsPage: React.FC = () => {
       const list: ApiNotification[] = Array.isArray(data) ? data : [];
 
       const mapped: NotificationItem[] = list
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .sort((a, b) => parseApiDate(b.createdAt).getTime() - parseApiDate(a.createdAt).getTime())
         .map(item => {
           const statusLabel = item.status != null ? NOTIFICATION_STATUS_LABEL[item.status] : '';
           const typeLabel = REQUEST_TYPE_LABEL[item.requestType] || '';
@@ -175,7 +187,7 @@ const NotificationsPage: React.FC = () => {
   }, [location.state, notifications]);
 
   const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString).getTime();
+    const date = parseApiDate(dateString).getTime();
     const now = Date.now();
     const diff = Math.max(0, now - date);
 
@@ -392,32 +404,37 @@ const NotificationsPage: React.FC = () => {
                   !isRead ? 'border-r-4 border-r-blue-600' : 'border-r-gray-200'
                 } ${isExpanded ? 'ring-2 ring-blue-500' : ''}`}
               >
-                <div className="p-6 flex items-start gap-4 text-right justify-between">
-                  {/* Mark read button */}
-                  <button
-                    onClick={(e) => toggleReadStatus(item.id, e)}
-                    className={`p-2.5 rounded-xl border transition ${
-                      isRead
-                        ? 'text-gray-400 hover:text-blue-600 hover:bg-blue-50 border-gray-200'
-                        : 'text-blue-600 bg-blue-50 border-blue-100 hover:bg-blue-100'
-                    }`}
-                    title={isRead ? 'تحديد كغير مقروء' : 'تحديد كمقروء'}
-                  >
-                    {isRead ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-
+                <div className="p-6 text-right">
                   {/* Main details */}
-                  <div className="flex-1 space-y-2 min-w-0">
-                    <div className="flex items-center gap-2 justify-end">
-                      <span className="text-sm font-semibold text-gray-400 flex items-center gap-1">
-                        {formatRelativeTime(item.createdAt)}
-                        <Calendar size={14} />
-                      </span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                      <h3 className="text-lg font-bold text-gray-900 truncate">
-                        {item.title}
-                      </h3>
-                      <span className="shrink-0">{getStatusIcon(item.status)}</span>
+                  <div className="space-y-2 min-w-0">
+                    <div className="flex items-center justify-between w-full">
+                      {/* Right (Start): Title & Icon */}
+                      <div className="flex items-center gap-2">
+                        <span className="shrink-0">{getStatusIcon(item.status)}</span>
+                        <h3 className="text-lg font-bold text-gray-900 truncate">
+                          {item.title}
+                        </h3>
+                      </div>
+
+                      {/* Left (End): Relative Time & EyeOff button */}
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm font-semibold text-gray-400 flex items-center gap-1">
+                          {formatRelativeTime(item.createdAt)}
+                          <Calendar size={14} />
+                        </span>
+
+                        <button
+                          onClick={(e) => toggleReadStatus(item.id, e)}
+                          className={`p-2 rounded-xl border transition shrink-0 ${
+                            isRead
+                              ? 'text-gray-400 hover:text-blue-600 hover:bg-blue-50 border-gray-200'
+                              : 'text-blue-600 bg-blue-50 border-blue-100 hover:bg-blue-100'
+                          }`}
+                          title={isRead ? 'تحديد كغير مقروء' : 'تحديد كمقروء'}
+                        >
+                          {isRead ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
                     </div>
 
                     <p className={`text-gray-600 text-sm leading-relaxed transition-all ${isExpanded ? '' : 'line-clamp-2'}`}>
@@ -447,7 +464,7 @@ const NotificationsPage: React.FC = () => {
                             <div className="flex justify-start items-center gap-4 py-3 border-b border-gray-100 last:border-b-0">
                               <span className="text-gray-500 w-32 shrink-0 text-right">تاريخ الإنشاء</span>
                               <span className="font-bold text-gray-900">
-                                {new Date(item.createdAt).toLocaleString('ar-EG', {
+                                {parseApiDate(item.createdAt).toLocaleString('ar-EG', {
                                   dateStyle: 'long',
                                   timeStyle: 'short'
                                 })}
@@ -459,11 +476,22 @@ const NotificationsPage: React.FC = () => {
                           {item.status === 0 && (
                             <div className="bg-red-50 border border-red-100 rounded-2xl p-5 text-right flex flex-col justify-between">
                               <div className="space-y-3">
-                                <div className="flex items-center gap-2 text-red-700 dark:text-red-400 font-bold text-base justify-end">
+                                <div className="flex items-center gap-2 text-red-700 dark:text-red-400 font-bold text-base justify-start">
                                   <span>سبب الرفض</span>
                                   <AlertCircle className="w-5 h-5 shrink-0" />
                                 </div>
-                                <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line font-semibold">
+                                <p 
+                                  className={`text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line font-semibold ${
+                                    rejectionReasons[item.requestId] && !/[\u0600-\u06FF]/.test(rejectionReasons[item.requestId])
+                                      ? 'text-left'
+                                      : 'text-right'
+                                  }`}
+                                  style={{
+                                    direction: rejectionReasons[item.requestId] && !/[\u0600-\u06FF]/.test(rejectionReasons[item.requestId])
+                                      ? 'ltr'
+                                      : 'rtl'
+                                  }}
+                                >
                                   {rejectionReasons[item.requestId] === undefined ? (
                                     <span className="text-gray-400 dark:text-gray-500 animate-pulse">جاري تحميل سبب الرفض...</span>
                                   ) : (

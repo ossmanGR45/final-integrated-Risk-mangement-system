@@ -701,7 +701,12 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
             {selectedRequest.rejectionReason && (
               <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4 text-right">
                 <p className="font-bold text-red-700 mb-1">سبب الرفض</p>
-                <p className="text-red-800">{selectedRequest.rejectionReason}</p>
+                <p 
+                  className={`text-red-800 ${!/[\u0600-\u06FF]/.test(selectedRequest.rejectionReason) ? 'text-left' : 'text-right'}`}
+                  style={{ direction: !/[\u0600-\u06FF]/.test(selectedRequest.rejectionReason) ? 'ltr' : 'rtl' }}
+                >
+                  {selectedRequest.rejectionReason}
+                </p>
               </div>
             )}
 

@@ -675,7 +675,12 @@ ${responsiblePhone || responsibleEmail ? `<tr><th>الهاتف</th><th>البر�
             {selectedRow.rejectReason && (
               <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4 text-right">
                 <p className="font-bold text-red-700 mb-1">سبب الرفض</p>
-                <p className="text-red-800">{selectedRow.rejectReason}</p>
+                <p 
+                  className={`text-red-800 ${!/[\u0600-\u06FF]/.test(selectedRow.rejectReason) ? 'text-left' : 'text-right'}`}
+                  style={{ direction: !/[\u0600-\u06FF]/.test(selectedRow.rejectReason) ? 'ltr' : 'rtl' }}
+                >
+                  {selectedRow.rejectReason}
+                </p>
               </div>
             )}
 

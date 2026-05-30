@@ -48,6 +48,18 @@ const REQUEST_TYPE_LABEL: Record<number, string> = {
 const THEME_STORAGE_KEY = 'themePreference';
 const READ_NOTIFICATIONS_STORAGE_KEY = 'readNotificationIds';
 
+const parseApiDate = (dateString: string): Date => {
+  if (!dateString) return new Date();
+  
+  // If the date string doesn't have a timezone specifier (Z or +/-XX:XX), append 'Z' to treat it as UTC
+  let formatted = dateString;
+  if (!dateString.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(dateString)) {
+    formatted = `${dateString}Z`;
+  }
+  
+  return new Date(formatted);
+};
+
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const user = getCurrentUser();
@@ -185,7 +197,7 @@ const Header: React.FC = () => {
         const mapped: NotificationItem[] = list
           .sort(
             (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              parseApiDate(b.createdAt).getTime() - parseApiDate(a.createdAt).getTime()
           )
           .slice(0, 8)
           .map(item => {
@@ -219,7 +231,7 @@ const Header: React.FC = () => {
   }, [user.role]);
 
   const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString).getTime();
+    const date = parseApiDate(dateString).getTime();
     const now = Date.now();
     const diff = Math.max(0, now - date);
 

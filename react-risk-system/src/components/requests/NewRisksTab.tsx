@@ -407,7 +407,12 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
             {selectedProposal.rejectionReason && (
               <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4 text-right">
                 <p className="font-bold text-red-700 mb-1">سبب الرفض</p>
-                <p className="text-red-800">{selectedProposal.rejectionReason}</p>
+                <p 
+                  className={`text-red-800 ${!/[\u0600-\u06FF]/.test(selectedProposal.rejectionReason) ? 'text-left' : 'text-right'}`}
+                  style={{ direction: !/[\u0600-\u06FF]/.test(selectedProposal.rejectionReason) ? 'ltr' : 'rtl' }}
+                >
+                  {selectedProposal.rejectionReason}
+                </p>
               </div>
             )}
 
