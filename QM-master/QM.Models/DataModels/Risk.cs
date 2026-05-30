@@ -1,6 +1,8 @@
 using QM.Models.Mapping;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using QM.Models.DTO;
 using static QM.Models.Enums;
 
 namespace QM.Models.DataModels
@@ -17,6 +19,7 @@ namespace QM.Models.DataModels
         /// When the frontend requests it, the API maps it to display integer 1–5.
         /// Mapping: [0, 0.20)→1  [0.20, 0.40)→2  [0.40, 0.60)→3  [0.60, 0.80)→4  [0.80, 1]→5
         /// </summary>
+        [JsonConverter(typeof(LikelihoodJsonConverter))]
         public double? likelihood { get; set; } = null;
 
         public Impact? Impact { get; set; } = null;

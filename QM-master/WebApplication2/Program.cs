@@ -24,9 +24,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>options.UseSqlServ
 
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
 {
-   
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 8;
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
     options.User.RequireUniqueEmail = false;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()

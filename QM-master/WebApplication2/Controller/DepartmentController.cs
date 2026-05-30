@@ -1,6 +1,7 @@
 using LinqKit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using QM.DataAccess.Managers;
 using QM.DataAccess.Repo;
 using QM.DataAccess.Repo.IRepo;
@@ -46,6 +47,35 @@ namespace QM.Controller
             if (department == null)
                 return BadRequest("Department data is null.");
 
+            var context = _uow.GetContext();
+
+            // Dynamic Update: propagate name changes to Risks and Requests
+            if (department.Id > 0 && !string.IsNullOrEmpty(department.Name))
+            {
+                var oldDepartment = await context.Departments
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(d => d.Id == department.Id);
+
+                if (oldDepartment != null && oldDepartment.Name != department.Name)
+                {
+                    var risksToUpdate = await context.Risks
+                        .Where(r => r.Department == oldDepartment.Name)
+                        .ToListAsync();
+                    foreach (var r in risksToUpdate)
+                    {
+                        r.Department = department.Name;
+                    }
+
+                    var requestsToUpdate = await context.RiskRequests
+                        .Where(r => r.Department == oldDepartment.Name)
+                        .ToListAsync();
+                    foreach (var req in requestsToUpdate)
+                    {
+                        req.Department = department.Name;
+                    }
+                }
+            }
+
             var _manager = new Manager<Department>(_uow);
             var createdDepartment = await _manager.AddUpdateAsync(department);
             await _uow.SaveChangesAsync();
@@ -60,6 +90,14 @@ namespace QM.Controller
             var record = await _manager.GetByIdAsync(id);
             if (record == null)
                 return NotFound("Record not found.");
+
+            // Relational Delete block: verify Department is not connected to a Risk
+            var context = _uow.GetContext();
+            var isConnected = await context.Risks.AnyAsync(r => r.Department == record.Name);
+            if (isConnected)
+            {
+                return BadRequest(new { Message = "هذا العنصر مرتبط بخطر يجب عليك إزالته من الخطر أولا" });
+            }
 
             await _manager.DeleteAsync(record);
             await _uow.SaveChangesAsync();

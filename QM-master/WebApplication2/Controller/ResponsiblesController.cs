@@ -1,6 +1,7 @@
 using LinqKit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using QM.DataAccess.Managers;
 using QM.DataAccess.Repo;
 using QM.DataAccess.Repo.IRepo;
@@ -72,6 +73,14 @@ namespace QM.Controller
             var record = await _manager.GetByIdAsync(id);
             if (record == null)
                 return NotFound("Record not found.");
+
+            // Relational Delete block: verify Responsible is not connected to a Risk
+            var context = _uow.GetContext();
+            var isConnected = await context.Risks.AnyAsync(r => r.ResponsibleId == id);
+            if (isConnected)
+            {
+                return BadRequest(new { Message = "هذا العنصر مرتبط بخطر يجب عليك إزالته من الخطر أولا" });
+            }
 
             await _manager.DeleteAsync(record);
             await _uow.SaveChangesAsync();

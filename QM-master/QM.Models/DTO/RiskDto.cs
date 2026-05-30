@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using static QM.Models.Enums;
 
@@ -18,6 +19,7 @@ namespace QM.Models.DTO
         /// Accepted as an integer 1–5 from the frontend.
         /// Stored as a decimal midpoint in the database (1→0.10 … 5→0.90).
         /// </summary>
+        [JsonConverter(typeof(LikelihoodJsonConverter))]
         public double? likelihood { get; set; } = null;
         public Impact? Impact { get; set; } = null;
 

@@ -442,6 +442,17 @@ namespace QM.Controller
             if (record == null)
                 return NotFound("Record not found.");
 
+            // Disassociate the risk from any historical requests (incidents)
+            var ctx = _uow.GetContext();
+            var associatedRequests = await ctx.RiskRequests
+                .Where(r => r.RiskId == id)
+                .ToListAsync();
+
+            foreach (var req in associatedRequests)
+            {
+                req.RiskId = null;
+            }
+
             await _manager.DeleteAsync(record);
             await _uow.SaveChangesAsync();
 

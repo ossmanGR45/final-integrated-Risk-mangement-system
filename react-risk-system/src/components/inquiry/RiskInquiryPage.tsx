@@ -490,7 +490,7 @@ const RiskInquiryPage: React.FC = () => {
                   <div
                     key={risk.id}
                     onClick={() => handleRiskClick(risk)}
-                    className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-all cursor-pointer"
+                    className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-all cursor-pointer flex flex-col h-full"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="text-right flex-1">
@@ -524,7 +524,7 @@ const RiskInquiryPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+                    <div className="mt-auto pt-4 border-t border-gray-200 flex items-center justify-between">
                       <div className="text-right">
                         <p className="text-xs text-gray-500 mb-1">درجة الخطر</p>
                         <p className="text-2xl font-bold text-gray-800">{score}</p>

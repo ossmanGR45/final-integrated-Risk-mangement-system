@@ -99,6 +99,17 @@ namespace QM.Controller
             if (record == null)
                 return NotFound("Record not found.");
 
+            // Cascade disassociate: delete Action references from Risks, Requests, and Causes mapping tables
+            var context = _uow.GetContext();
+            var riskActionMappings = await context.RiskActionMappings.Where(m => m.ActionID == id).ToListAsync();
+            context.RiskActionMappings.RemoveRange(riskActionMappings);
+
+            var requestActionMappings = await context.RequestActionMappings.Where(m => m.ActionID == id).ToListAsync();
+            context.RequestActionMappings.RemoveRange(requestActionMappings);
+
+            var actionCauseMappings = await context.ActionCauseMappings.Where(m => m.ActionID == id).ToListAsync();
+            context.ActionCauseMappings.RemoveRange(actionCauseMappings);
+
             await _manager.DeleteAsync(record);
             await _uow.SaveChangesAsync();
 

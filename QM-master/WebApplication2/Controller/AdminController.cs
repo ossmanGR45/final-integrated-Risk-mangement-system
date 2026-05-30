@@ -40,6 +40,13 @@ namespace QM.Controller
                 return BadRequest(new { Message = $"Role '{model.RoleName}' does not exist. Please create it first." });
             }
 
+            // Check if user with same Employee ID already exists
+            var existingUserById = await _userManager.FindByIdAsync(model.Id.ToString());
+            if (existingUserById != null)
+            {
+                return Conflict(new { Message = $"A user with Employee ID '{model.Id}' already exists." });
+            }
+
             // Check if user with same email already exists
             var existingUser = await _userManager.FindByEmailAsync(model.Email);
             if (existingUser != null)
@@ -80,7 +87,8 @@ namespace QM.Controller
                 });
             }
 
-            return BadRequest(new { Message = "Failed to create user.", Errors = result.Errors });
+            var errorMsg = string.Join(" ", result.Errors.Select(e => e.Description));
+            return BadRequest(new { Message = $"Failed to create user. {errorMsg}", Errors = result.Errors });
         }
 
         /// <summary>

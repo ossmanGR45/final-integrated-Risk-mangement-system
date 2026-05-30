@@ -1,4 +1,6 @@
 using QM.Models.Mapping;
+using System.Text.Json.Serialization;
+using QM.Models.DTO;
 using static QM.Models.Enums;
 
 
@@ -9,12 +11,14 @@ namespace QM.Models.DataModels
         public string? Department { get; set; } = null;
         public DateTime? Year { get; set; } = null;
         public string? Category { get; set; } = null; 
+        [JsonConverter(typeof(LikelihoodJsonConverter))]
         public double? Likelihood { get; set; } = null;
         public Impact? Impact { get; set; } = null;
         public DateTime? ExpectedTime { get; set; } = null;
         public string? Description { get; set; } = null;
         public RequestStatus? Status { get; set; } = null;
         public bool? Occured { get; set; } = null;
+        [JsonConverter(typeof(LikelihoodJsonConverter))]
         public double? PostLikelihood { get; set; } = null;
         public Impact? PostImpact { get; set; } = null;
         public string? rejectReason { get; set; } = null;

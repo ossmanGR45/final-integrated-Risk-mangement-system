@@ -1,6 +1,7 @@
 using LinqKit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using QM.DataAccess.Managers;
 using QM.DataAccess.Repo;
 using QM.DataAccess.Repo.IRepo;
@@ -48,6 +49,35 @@ namespace QM.Controller
             if (category == null)
                 return BadRequest("Category data is null.");
 
+            var context = _uow.GetContext();
+
+            // Dynamic Update: propagate name changes to Risks and Requests
+            if (category.Id > 0 && !string.IsNullOrEmpty(category.CategoryName))
+            {
+                var oldCategory = await context.Categories
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Id == category.Id);
+
+                if (oldCategory != null && oldCategory.CategoryName != category.CategoryName)
+                {
+                    var risksToUpdate = await context.Risks
+                        .Where(r => r.CategoryName == oldCategory.CategoryName)
+                        .ToListAsync();
+                    foreach (var r in risksToUpdate)
+                    {
+                        r.CategoryName = category.CategoryName;
+                    }
+
+                    var requestsToUpdate = await context.RiskRequests
+                        .Where(r => r.Category == oldCategory.CategoryName)
+                        .ToListAsync();
+                    foreach (var req in requestsToUpdate)
+                    {
+                        req.Category = category.CategoryName;
+                    }
+                }
+            }
+
             var _manager = new Manager<Category>(_uow);
             var createdCategory = await _manager.AddUpdateAsync(category);
             await _uow.SaveChangesAsync();
@@ -62,6 +92,14 @@ namespace QM.Controller
             var record = await _manager.GetByIdAsync(id);
             if (record == null)
                 return NotFound("Record not found.");
+
+            // Relational Delete block: verify Category is not connected to a Risk
+            var context = _uow.GetContext();
+            var isConnected = await context.Risks.AnyAsync(r => r.CategoryName == record.CategoryName);
+            if (isConnected)
+            {
+                return BadRequest(new { Message = "هذا العنصر مرتبط بخطر يجب عليك إزالته من الخطر أولا" });
+            }
 
             await _manager.DeleteAsync(record);
             await _uow.SaveChangesAsync();

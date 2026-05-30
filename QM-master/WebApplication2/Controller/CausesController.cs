@@ -1,6 +1,7 @@
 using LinqKit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using QM.DataAccess.Managers;
 using QM.DataAccess.Repo;
 using QM.DataAccess.Repo.IRepo;
@@ -83,6 +84,17 @@ namespace QM.Controller
             var record = await _manager.GetByIdAsync(id);
             if (record == null)
                 return NotFound("Record not found.");
+
+            // Cascade disassociate: delete Cause references from Risks, Requests, and Actions mapping tables
+            var context = _uow.GetContext();
+            var riskCauseMappings = await context.RiskCauseMappings.Where(m => m.CauseID == id).ToListAsync();
+            context.RiskCauseMappings.RemoveRange(riskCauseMappings);
+
+            var requestCauseMappings = await context.RequestCauseMappings.Where(m => m.CauseID == id).ToListAsync();
+            context.RequestCauseMappings.RemoveRange(requestCauseMappings);
+
+            var actionCauseMappings = await context.ActionCauseMappings.Where(m => m.CauseID == id).ToListAsync();
+            context.ActionCauseMappings.RemoveRange(actionCauseMappings);
 
             await _manager.DeleteAsync(record);
             await _uow.SaveChangesAsync();
