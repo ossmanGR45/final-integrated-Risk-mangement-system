@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { UserRole } from '../../types';
 import { API_BASE } from '../../api/http';
 import Pagination from '../common/Pagination';
+import CustomSelect from '../shared/CustomSelect';
 
 // What the backend actually returns from /api/logs and /api/logs/my.
 interface ApiAuditLog {
@@ -207,7 +208,7 @@ const LogsPage: React.FC<LogsPageProps> = ({ role }) => {
     <div className="bg-white rounded-lg shadow-sm">
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-4xl font-bold mb-4 text-center">
-          {role === 'admin' ? 'السجلات' : 'سجلاتي'}
+          {role === 'admin' ? 'logs' : 'سجلاتي'}
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
@@ -225,42 +226,37 @@ const LogsPage: React.FC<LogsPageProps> = ({ role }) => {
             onChange={e => setFilters({ ...filters, logId: e.target.value })}
           />
 
-          <select
-            className="border rounded px-4 py-3 text-lg"
+          <CustomSelect
             value={filters.type}
-            onChange={e => setFilters({ ...filters, type: e.target.value })}
-          >
-            <option value="">كل الإجراءات</option>
-            {allTypes.map(type => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
+            onChange={value => setFilters({ ...filters, type: value })}
+            options={[
+              { value: '', label: 'كل الإجراءات' },
+              ...allTypes.map(type => ({ value: type, label: type }))
+            ]}
+            placeholder="كل الإجراءات"
+          />
 
-          <select
-            className="border rounded px-4 py-3 text-lg"
+          <CustomSelect
             value={filters.tableName}
-            onChange={e => setFilters({ ...filters, tableName: e.target.value })}
-          >
-            <option value="">كل الجداول</option>
-            {allTables.map(table => (
-              <option key={table} value={table}>
-                {table}
-              </option>
-            ))}
-          </select>
+            onChange={value => setFilters({ ...filters, tableName: value })}
+            options={[
+              { value: '', label: 'كل الجداول' },
+              ...allTables.map(table => ({ value: table, label: table }))
+            ]}
+            placeholder="كل الجداول"
+          />
 
-          <select
-            className="border rounded px-4 py-3 text-lg"
+          <CustomSelect
             value={sortBy}
-            onChange={e => setSortBy(e.target.value as SortOption)}
-          >
-            <option value="date_desc">الأحدث أولاً</option>
-            <option value="date_asc">الأقدم أولاً</option>
-            <option value="type_asc">حسب الإجراء</option>
-            <option value="table_asc">حسب الجدول</option>
-          </select>
+            onChange={value => setSortBy(value as SortOption)}
+            options={[
+              { value: 'date_desc', label: 'الأحدث أولاً' },
+              { value: 'date_asc', label: 'الأقدم أولاً' },
+              { value: 'type_asc', label: 'حسب الإجراء' },
+              { value: 'table_asc', label: 'حسب الجدول' }
+            ]}
+            placeholder="الترتيب"
+          />
         </div>
       </div>
 

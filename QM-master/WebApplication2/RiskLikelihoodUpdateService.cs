@@ -164,7 +164,7 @@ namespace QM.Services
                 risks.Count);
 
             // 5. Send a system notification to every Admin user.
-            await NotifyAdminsAsync(ctx, cancellationToken);
+            // await NotifyAdminsAsync(ctx, cancellationToken);
         }
 
         // ---------------------------------------------------------------

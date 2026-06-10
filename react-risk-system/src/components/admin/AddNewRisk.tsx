@@ -14,10 +14,13 @@ import {
   ChevronLeft,
   AlertCircle,
   Siren,
-  ShieldCheck
+  ShieldCheck,
+  Check,
+  X
 } from 'lucide-react';
 import { calculateRiskScore, getRiskColor, getRiskLabel } from '../../utils/riskCalculations';
 import { API_BASE } from '../../api/http';
+import CustomSelect from '../shared/CustomSelect';
 
 interface AddNewRiskProps {
   onSubmit?: (data: any) => void;
@@ -176,6 +179,13 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
   // When the admin opens this form via "accept proposal", we keep the id of
   // the existing Risk suggestion so we update it instead of creating a duplicate.
   const [proposalId, setProposalId] = useState<number | null>(null);
+
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000);
+  };
 
   const [selectedCauseTemplate, setSelectedCauseTemplate] = useState('');
   const [selectedActionTemplate, setSelectedActionTemplate] = useState('');
@@ -339,10 +349,11 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       setDepartments(departmentsRes.ok && Array.isArray(departmentsData) ? departmentsData : []);
     } catch (error) {
       console.error('Error loading master data:', error);
-      alert(
+      showNotification(
         `حدث خطأ أثناء تحميل البيانات الأساسية: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
+        'error'
       );
     }
   };
@@ -485,7 +496,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
     e.preventDefault();
 
     if (!categoryForm.categoryName.trim()) {
-      alert('الرجاء إدخال اسم الفئة');
+      showNotification('الرجاء إدخال اسم الفئة', 'error');
       return;
     }
 
@@ -506,7 +517,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       const result = await parseJsonSafe(response);
 
       if (!response.ok) {
-        alert(result?.message || 'فشل إنشاء الفئة');
+        showNotification(result?.message || 'فشل إنشاء الفئة', 'error');
         return;
       }
 
@@ -517,13 +528,13 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       }
 
       setCategoryForm({ categoryName: '' });
-      alert(result?.message || 'تمت إضافة الفئة بنجاح');
+      showNotification(result?.message || 'تمت إضافة الفئة بنجاح', 'success');
       if (!keepTabAfterCreate) {
         setActiveTab('risk');
       }
     } catch (error) {
       console.error('Error creating category:', error);
-      alert(`حدث خطأ أثناء إضافة الفئة: ${error instanceof Error ? error.message : String(error)}`);
+      showNotification(`حدث خطأ أثناء إضافة الفئة: ${error instanceof Error ? error.message : String(error)}`, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -537,7 +548,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       !responsibleForm.contactName.trim() ||
       !responsibleForm.contactPhoneNumber.trim()
     ) {
-      alert('الرجاء تعبئة اسم الجهة واسم الشخص المسؤول ورقم الهاتف');
+      showNotification('الرجاء تعبئة اسم الجهة واسم الشخص المسؤول ورقم الهاتف', 'error');
       return;
     }
 
@@ -561,7 +572,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       const result = await parseJsonSafe(response);
 
       if (!response.ok) {
-        alert(result?.message || 'فشل إنشاء الجهة المسؤولة');
+        showNotification(result?.message || 'فشل إنشاء الجهة المسؤولة', 'error');
         return;
       }
 
@@ -578,16 +589,17 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
         contactPhoneNumber: ''
       });
 
-      alert(result?.message || 'تمت إضافة الجهة المسؤولة بنجاح');
+      showNotification(result?.message || 'تمت إضافة الجهة المسؤولة بنجاح', 'success');
       if (!keepTabAfterCreate) {
         setActiveTab('risk');
       }
     } catch (error) {
       console.error('Error creating responsible entity:', error);
-      alert(
+      showNotification(
         `حدث خطأ أثناء إضافة الجهة المسؤولة: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
+        'error'
       );
     } finally {
       setIsLoading(false);
@@ -598,7 +610,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
     e.preventDefault();
 
     if (!departmentForm.name.trim()) {
-      alert('الرجاء إدخال اسم القسم');
+      showNotification('الرجاء إدخال اسم القسم', 'error');
       return;
     }
 
@@ -619,18 +631,18 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       const result = await parseJsonSafe(response);
 
       if (!response.ok) {
-        alert(formatApiError(result) || 'فشل إنشاء القسم');
+        showNotification(formatApiError(result) || 'فشل إنشاء القسم', 'error');
         return;
       }
 
       setDepartmentForm({ name: '' });
-      alert('تمت إضافة القسم بنجاح');
+      showNotification('تمت إضافة القسم بنجاح', 'success');
       if (!keepTabAfterCreate) {
         setActiveTab('risk');
       }
     } catch (error) {
       console.error('Error creating department:', error);
-      alert(`حدث خطأ أثناء إضافة القسم: ${error instanceof Error ? error.message : String(error)}`);
+      showNotification(`حدث خطأ أثناء إضافة القسم: ${error instanceof Error ? error.message : String(error)}`, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -640,7 +652,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
     e.preventDefault();
 
     if (!strategicGoalForm.goalDescription.trim()) {
-      alert('الرجاء إدخال الغاية الاستراتيجية');
+      showNotification('الرجاء إدخال الغاية الاستراتيجية', 'error');
       return;
     }
 
@@ -661,22 +673,23 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       const result = await parseJsonSafe(response);
 
       if (!response.ok) {
-        alert(formatApiError(result) || 'فشل إنشاء الغاية الاستراتيجية');
+        showNotification(formatApiError(result) || 'فشل إنشاء الغاية الاستراتيجية', 'error');
         return;
       }
 
       setStrategicGoalForm({ goalDescription: '' });
       await fetchMasterData();
-      alert('تمت إضافة الغاية الاستراتيجية بنجاح');
+      showNotification('تمت إضافة الغاية الاستراتيجية بنجاح', 'success');
       if (!keepTabAfterCreate) {
         setActiveTab('risk');
       }
     } catch (error) {
       console.error('Error creating strategic goal:', error);
-      alert(
+      showNotification(
         `حدث خطأ أثناء إضافة الغاية الاستراتيجية: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
+        'error'
       );
     } finally {
       setIsLoading(false);
@@ -687,7 +700,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
     e.preventDefault();
 
     if (!causeForm.causeDescription.trim()) {
-      alert('الرجاء إدخال السبب');
+      showNotification('الرجاء إدخال السبب', 'error');
       return;
     }
 
@@ -708,19 +721,19 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       const result = await parseJsonSafe(response);
 
       if (!response.ok) {
-        alert(formatApiError(result) || 'فشل إنشاء السبب');
+        showNotification(formatApiError(result) || 'فشل إنشاء السبب', 'error');
         return;
       }
 
       setCauseForm({ causeDescription: '' });
       await fetchMasterData();
-      alert('تمت إضافة السبب بنجاح');
+      showNotification('تمت إضافة السبب بنجاح', 'success');
       if (!keepTabAfterCreate) {
         setActiveTab('risk');
       }
     } catch (error) {
       console.error('Error creating cause:', error);
-      alert(`حدث خطأ أثناء إضافة السبب: ${error instanceof Error ? error.message : String(error)}`);
+      showNotification(`حدث خطأ أثناء إضافة السبب: ${error instanceof Error ? error.message : String(error)}`, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -746,14 +759,14 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
     }
 
     await fetchMasterData();
-    alert(successMessage);
+    showNotification(successMessage, 'success');
   };
 
   const handleCreateResponseAction = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!responseActionForm.actionDescription.trim()) {
-      alert('الرجاء إدخال الإجراء عند وقوع الخطر');
+      showNotification('الرجاء إدخال الإجراء عند وقوع الخطر', 'error');
       return;
     }
 
@@ -770,10 +783,11 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       }
     } catch (error) {
       console.error('Error creating response action:', error);
-      alert(
+      showNotification(
         `حدث خطأ أثناء إضافة الإجراء عند وقوع الخطر: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
+        'error'
       );
     } finally {
       setIsLoading(false);
@@ -784,7 +798,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
     e.preventDefault();
 
     if (!preventiveActionForm.actionDescription.trim()) {
-      alert('الرجاء إدخال الإجراء الوقائي');
+      showNotification('الرجاء إدخال الإجراء الوقائي', 'error');
       return;
     }
 
@@ -797,10 +811,11 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       }
     } catch (error) {
       console.error('Error creating preventive action:', error);
-      alert(
+      showNotification(
         `حدث خطأ أثناء إضافة الإجراء الوقائي: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
+        'error'
       );
     } finally {
       setIsLoading(false);
@@ -816,12 +831,12 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       !riskForm.department.trim() ||
       !riskForm.location.trim()
     ) {
-      alert('الرجاء تعبئة الحقول الأساسية للخطر');
+      showNotification('الرجاء تعبئة الحقول الأساسية للخطر', 'error');
       return;
     }
 
     if (cleanList(strategicGoals).length === 0) {
-      alert('الرجاء اختيار غاية إستراتيجية واحدة على الأقل');
+      showNotification('الرجاء اختيار غاية إستراتيجية واحدة على الأقل', 'error');
       return;
     }
 
@@ -900,11 +915,11 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       const result = await parseJsonSafe(response);
 
       if (!response.ok) {
-        alert(formatApiError(result) || 'فشل حفظ الخطر');
+        showNotification(formatApiError(result) || 'فشل حفظ الخطر', 'error');
         return;
       }
 
-      alert(result?.message || 'تمت إضافة الخطر مباشرة إلى قاعدة البيانات');
+      showNotification(result?.message || 'تمت إضافة الخطر مباشرة إلى قاعدة البيانات', 'success');
 
       onSubmit?.(result?.data ?? payload);
 
@@ -930,7 +945,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
       setSelectedStrategicGoalTemplate('');
     } catch (error) {
       console.error('Error creating risk:', error);
-      alert(`حدث خطأ أثناء إضافة الخطر: ${error instanceof Error ? error.message : String(error)}`);
+      showNotification(`حدث خطأ أثناء إضافة الخطر: ${error instanceof Error ? error.message : String(error)}`, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -956,11 +971,13 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
     const itemsCount = countFilled(values);
 
     return (
-      <div className="border border-gray-200 rounded-2xl bg-white overflow-hidden">
+      <div className="border border-gray-200 rounded-2xl bg-white">
         <button
           type="button"
           onClick={() => toggleSection(key)}
-          className="w-full px-6 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          className={`w-full px-6 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors rounded-t-2xl ${
+            !isOpen ? 'rounded-b-2xl' : ''
+          }`}
         >
           <div className="flex items-center gap-3 text-right">
             <div className="text-gray-600">{icon}</div>
@@ -981,7 +998,7 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
         </button>
 
         {isOpen && (
-          <div className="border-t border-gray-200 p-6 space-y-4 bg-gray-50">
+          <div className="border-t border-gray-200 p-6 space-y-4 bg-gray-50 rounded-b-2xl">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -991,18 +1008,13 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
                 {actionButtonLabel}
               </button>
 
-              <select
+              <CustomSelect
                 value={selectedSuggestion}
-                onChange={(e) => onSelectSuggestion(e.target.value)}
-                className="flex-1 px-4 py-3 rounded-xl border border-gray-300 bg-white text-right"
-              >
-                <option value="">{suggestionPlaceholder}</option>
-                {suggestions.map((item, index) => (
-                  <option key={`${title}-suggestion-${index}`} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
+                onChange={onSelectSuggestion}
+                options={suggestions.map((item) => ({ value: item, label: item }))}
+                placeholder={suggestionPlaceholder}
+                className="flex-1"
+              />
             </div>
 
             {values.map((item, index) => (
@@ -1485,20 +1497,15 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
                       أضف فئة
                     </button>
 
-                    <select
+                    <CustomSelect
                       value={riskForm.categoryID}
-                      onChange={(e) =>
-                        setRiskForm(prev => ({ ...prev, categoryID: e.target.value }))
+                      onChange={(value) =>
+                        setRiskForm(prev => ({ ...prev, categoryID: value }))
                       }
-                      className="flex-1 px-4 py-4 border rounded-xl bg-white text-right"
-                    >
-                      <option value="">اختر الفئة</option>
-                      {categories.map(category => (
-                        <option key={category.id} value={category.id}>
-                          {category.categoryName}
-                        </option>
-                      ))}
-                    </select>
+                      options={categories.map(category => ({ value: String(category.id), label: category.categoryName }))}
+                      placeholder="اختر الفئة"
+                      className="flex-1"
+                    />
                   </div>
                 </div>
 
@@ -1525,20 +1532,15 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
                       أضف قسم
                     </button>
 
-                    <select
+                    <CustomSelect
                       value={riskForm.department}
-                      onChange={(e) =>
-                        setRiskForm(prev => ({ ...prev, department: e.target.value }))
+                      onChange={(value) =>
+                        setRiskForm(prev => ({ ...prev, department: value }))
                       }
-                      className="flex-1 px-4 py-4 border rounded-xl bg-white text-right"
-                    >
-                      <option value="">اختر القسم</option>
-                      {departments.map(department => (
-                        <option key={department.id} value={department.name}>
-                          {department.name}
-                        </option>
-                      ))}
-                    </select>
+                      options={departments.map(department => ({ value: department.name, label: department.name }))}
+                      placeholder="اختر القسم"
+                      className="flex-1"
+                    />
                   </div>
                 </div>
 
@@ -1612,20 +1614,15 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
                       أضف جهة
                     </button>
 
-                    <select
+                    <CustomSelect
                       value={riskForm.responsibleId}
-                      onChange={(e) =>
-                        setRiskForm(prev => ({ ...prev, responsibleId: e.target.value }))
+                      onChange={(value) =>
+                        setRiskForm(prev => ({ ...prev, responsibleId: value }))
                       }
-                      className="flex-1 px-4 py-4 border rounded-xl bg-white text-right"
-                    >
-                      <option value="">اختر الجهة المسؤولة (اختياري)</option>
-                      {responsibleEntities.map(entity => (
-                        <option key={entity.id} value={entity.id}>
-                          {entity.entityName}
-                        </option>
-                      ))}
-                    </select>
+                      options={responsibleEntities.map(entity => ({ value: String(entity.id), label: entity.entityName }))}
+                      placeholder="اختر الجهة المسؤولة (اختياري)"
+                      className="flex-1"
+                    />
                   </div>
                 </div>
 
@@ -1756,6 +1753,16 @@ const AddNewRisk: React.FC<AddNewRiskProps> = ({
           </form>
         )}
       </div>
+      {notification && (
+        <div
+          className={`fixed bottom-5 left-5 z-[200] px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 text-white border transition-all transform translate-y-0 ${
+            notification.type === 'success' ? 'bg-green-600 border-green-700' : 'bg-red-600 border-red-700'
+          }`}
+        >
+          {notification.type === 'success' ? <Check size={20} /> : <X size={20} />}
+          <span className="font-bold">{notification.message}</span>
+        </div>
+      )}
     </div>
   );
 };

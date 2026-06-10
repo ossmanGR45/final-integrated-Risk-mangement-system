@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { UserPlus, Edit2, Trash2, Users, Search, Shield, X, Check, Mail, Lock, User as UserIcon, Award } from 'lucide-react';
+import ConfirmDialog from '../shared/ConfirmDialog';
 import { API_BASE } from '../../api/http';
+import CustomSelect from '../shared/CustomSelect';
 
 
 
@@ -21,6 +23,9 @@ export default function UsersPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
+
+  // Confirm Delete Dialog State
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
 
   // New User Form State
   const [newUser, setNewUser] = useState({
@@ -194,10 +199,14 @@ export default function UsersPage() {
     }
   };
 
-  // Handle Delete User
-  const handleDeleteUser = async (employeeId: number) => {
-    const confirmDelete = window.confirm('هل أنت متأكد من رغبتك في حذف هذا المستخدم نهائياً؟');
-    if (!confirmDelete) return;
+  const handleDeleteRequest = (employeeId: number) => {
+    setPendingDeleteId(employeeId);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (pendingDeleteId === null) return;
+    const employeeId = pendingDeleteId;
+    setPendingDeleteId(null);
 
     try {
       const token = localStorage.getItem('authToken');
@@ -242,6 +251,15 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={pendingDeleteId !== null}
+        title="تأكيد حذف المستخدم"
+        message="هل أنت متأكد من رغبتك في حذف هذا المستخدم نهائياً؟ لا يمكن التراجع عن هذا الإجراء."
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setPendingDeleteId(null)}
+      />
+
       {/* Toast Notification */}
       {notification && (
         <div
@@ -346,7 +364,7 @@ export default function UsersPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDeleteUser(user.employeeId)}
+                        onClick={() => handleDeleteRequest(user.employeeId)}
                         title="حذف"
                         className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-red-50"
                       >
@@ -453,32 +471,30 @@ export default function UsersPage() {
               {/* Role Dropdown */}
               <div>
                 <label className="block text-right text-sm font-bold text-gray-700 mb-1">الصلاحية / الدور *</label>
-                <select
+                <CustomSelect
                   value={newUser.roleName}
-                  onChange={(e) => setNewUser({ ...newUser, roleName: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-right focus:border-blue-500 focus:outline-none transition-colors bg-white"
-                >
-                  <option value="Admin">مدير النظام (Admin)</option>
-                  <option value="Manager">مدير (Manager)</option>
-                  <option value="Initi">ضابط ارتباط (Initiator)</option>
-                </select>
+                  onChange={(value) => setNewUser({ ...newUser, roleName: value })}
+                  options={[
+                    { value: 'Admin', label: 'مدير النظام (Admin)' },
+                    { value: 'Manager', label: 'مدير (Manager)' },
+                    { value: 'Initi', label: 'ضابط ارتباط (Initiator)' }
+                  ]}
+                  placeholder="الصلاحية / الدور *"
+                />
               </div>
 
               {/* Manager Dropdown */}
               <div>
                 <label className="block text-right text-sm font-bold text-gray-700 mb-1">المدير المباشر (اختياري)</label>
-                <select
+                <CustomSelect
                   value={newUser.managerId}
-                  onChange={(e) => setNewUser({ ...newUser, managerId: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-right focus:border-blue-500 focus:outline-none transition-colors bg-white"
-                >
-                  <option value="">حدد المدير المباشر</option>
-                  {availableManagers.map(m => (
-                    <option key={m.employeeId} value={m.employeeId}>
-                      {m.userName} ({getRoleLabel(m.roles)})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => setNewUser({ ...newUser, managerId: value })}
+                  options={availableManagers.map(m => ({
+                    value: String(m.employeeId),
+                    label: `${m.userName} (${getRoleLabel(m.roles)})`
+                  }))}
+                  placeholder="حدد المدير المباشر"
+                />
               </div>
 
               {/* Submit Buttons */}
@@ -526,35 +542,32 @@ export default function UsersPage() {
               {/* Role Dropdown */}
               <div>
                 <label className="block text-right text-sm font-bold text-gray-700 mb-1">الصلاحية / الدور *</label>
-                <select
+                <CustomSelect
                   value={editUser.newRole}
-                  onChange={(e) => setEditUser({ ...editUser, newRole: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-right focus:border-blue-500 focus:outline-none transition-colors bg-white"
-                >
-                  <option value="Admin">مدير النظام (Admin)</option>
-                  <option value="Manager">مدير (Manager)</option>
-                  <option value="Initi">ضابط ارتباط (Initiator)</option>
-                </select>
+                  onChange={(value) => setEditUser({ ...editUser, newRole: value })}
+                  options={[
+                    { value: 'Admin', label: 'مدير النظام (Admin)' },
+                    { value: 'Manager', label: 'مدير (Manager)' },
+                    { value: 'Initi', label: 'ضابط ارتباط (Initiator)' }
+                  ]}
+                  placeholder="الصلاحية / الدور *"
+                />
               </div>
 
               {/* Manager Dropdown */}
               <div>
                 <label className="block text-right text-sm font-bold text-gray-700 mb-1">المدير المباشر (اختياري)</label>
-                <select
+                <CustomSelect
                   value={editUser.managerId}
-                  onChange={(e) => setEditUser({ ...editUser, managerId: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-right focus:border-blue-500 focus:outline-none transition-colors bg-white"
-                >
-                  <option value="">بدون مدير مباشر</option>
-                  {availableManagers
-                    .filter(m => m.employeeId !== selectedUser.employeeId) // Cannot select self as manager
-                    .map(m => (
-                      <option key={m.employeeId} value={m.employeeId}>
-                        {m.userName} ({getRoleLabel(m.roles)})
-                      </option>
-                    ))
-                  }
-                </select>
+                  onChange={(value) => setEditUser({ ...editUser, managerId: value })}
+                  options={availableManagers
+                    .filter(m => m.employeeId !== selectedUser.employeeId)
+                    .map(m => ({
+                      value: String(m.employeeId),
+                      label: `${m.userName} (${getRoleLabel(m.roles)})`
+                    }))}
+                  placeholder="بدون مدير مباشر"
+                />
               </div>
 
               {/* Submit Buttons */}

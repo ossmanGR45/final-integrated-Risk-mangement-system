@@ -338,7 +338,10 @@ namespace QM.Controller
             await riskManager.AddUpdateAsync(risk);
 
             // 6. Notification routing
-            await CreateRiskNotification(notificationManager, risk, isNew, userRole, userId);
+            if (risk.Custom == true)
+            {
+                await CreateRiskNotification(notificationManager, risk, isNew, userRole, userId);
+            }
 
             await _uow.SaveChangesAsync();
 
@@ -352,57 +355,120 @@ namespace QM.Controller
             string? userRole,
             int actingUserId)
         {
-            // New record OR a manager re-directed it → notify admin(s).
-            if (isNew && !IsAdmin(userRole))
+            var ctx = _uow.GetContext();
+
+            if (isNew)
+            {
+                // New suggestion by initiator/manager → notify the creator's manager.
+                // (Mirrors RequestsController: initiator creates → manager gets notified.)
+                if (!IsAdmin(userRole))
+                {
+                    var creatorUser = await ctx.Users.FirstOrDefaultAsync(u => u.Id == actingUserId);
+                    if (creatorUser != null && creatorUser.ManagerId.HasValue)
+                    {
+                        await notifManager.AddUpdateAsync(new NotificationModel
+                        {
+                            requestId = risk.Id,
+                            UserId = creatorUser.ManagerId.Value,
+                            status = notificationType.created,
+                            requestType = requestType.Risk,
+                            createdAt = DateTime.Now
+                        });
+                    }
+                }
+                return;
+            }
+
+            // Existing record being updated — branch by status.
+            // Manager forwarding (status = underReview) → notify admin(s).
+            if (IsManager(userRole) && risk.Status == RequestStatus.underReview)
             {
                 await NotifyAllAdmins(notifManager, risk.Id, requestType.Risk);
                 return;
             }
 
-            // Manager forwarding (status moved to underReview) → notify admin(s).
-            if (!isNew && IsManager(userRole) && risk.Status == RequestStatus.underReview)
-            {
-                await NotifyAllAdmins(notifManager, risk.Id, requestType.Risk);
-                return;
-            }
-
-            // Accept/reject → notify the original initiator.
+            // Accept → notify the original initiator AND their manager.
             if (risk.Status == RequestStatus.Accepted)
             {
+                var creatorId = risk.UserId ?? actingUserId;
+                var creatorUser = await ctx.Users.FirstOrDefaultAsync(u => u.Id == creatorId);
+
+                // 1. Notify the original initiator
                 await notifManager.AddUpdateAsync(new NotificationModel
                 {
                     requestId = risk.Id,
-                    UserId = risk.UserId ?? actingUserId,
+                    UserId = creatorId,
                     status = notificationType.accept,
                     requestType = requestType.Risk,
                     createdAt = DateTime.Now
                 });
+
+                // 2. Notify the initiator's manager
+                if (creatorUser != null && creatorUser.ManagerId.HasValue)
+                {
+                    await notifManager.AddUpdateAsync(new NotificationModel
+                    {
+                        requestId = risk.Id,
+                        UserId = creatorUser.ManagerId.Value,
+                        status = notificationType.accept,
+                        requestType = requestType.Risk,
+                        createdAt = DateTime.Now
+                    });
+                }
                 return;
             }
 
+            // Reject → notify the original initiator AND their manager.
             if (risk.Status == RequestStatus.Rejected)
             {
+                var creatorId = risk.UserId ?? actingUserId;
+                var creatorUser = await ctx.Users.FirstOrDefaultAsync(u => u.Id == creatorId);
+
+                // 1. Notify the original initiator
                 await notifManager.AddUpdateAsync(new NotificationModel
                 {
                     requestId = risk.Id,
-                    UserId = risk.UserId ?? actingUserId,
+                    UserId = creatorId,
                     status = notificationType.reject,
                     requestType = requestType.Risk,
                     createdAt = DateTime.Now
                 });
+
+                // 2. Notify the initiator's manager
+                if (creatorUser != null && creatorUser.ManagerId.HasValue)
+                {
+                    await notifManager.AddUpdateAsync(new NotificationModel
+                    {
+                        requestId = risk.Id,
+                        UserId = creatorUser.ManagerId.Value,
+                        status = notificationType.reject,
+                        requestType = requestType.Risk,
+                        createdAt = DateTime.Now
+                    });
+                }
                 return;
             }
 
-            // Default: 'updated' notification to the original initiator.
-            await notifManager.AddUpdateAsync(new NotificationModel
+            // Resubmission (InProgress) → notify the initiator's manager.
+            if (risk.Status == RequestStatus.InProgress)
             {
-                requestId = risk.Id,
-                UserId = risk.UserId ?? actingUserId,
-                status = isNew ? notificationType.created : notificationType.updated,
-                requestType = requestType.Risk,
-                createdAt = DateTime.Now
-            });
+                var creatorId = risk.UserId ?? actingUserId;
+                var creatorUser = await ctx.Users.FirstOrDefaultAsync(u => u.Id == creatorId);
+                if (creatorUser != null && creatorUser.ManagerId.HasValue)
+                {
+                    await notifManager.AddUpdateAsync(new NotificationModel
+                    {
+                        requestId = risk.Id,
+                        UserId = creatorUser.ManagerId.Value,
+                        status = notificationType.created,
+                        requestType = requestType.Risk,
+                        createdAt = DateTime.Now
+                    });
+                }
+                return;
+            }
         }
+
 
         private async Task NotifyAllAdmins(
             Manager<NotificationModel> notifManager, int requestId, requestType type)

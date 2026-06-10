@@ -113,17 +113,40 @@ const NotificationsPage: React.FC = () => {
       const mapped: NotificationItem[] = list
         .sort((a, b) => parseApiDate(b.createdAt).getTime() - parseApiDate(a.createdAt).getTime())
         .map(item => {
-          const statusLabel = item.status != null ? NOTIFICATION_STATUS_LABEL[item.status] : '';
-          const typeLabel = REQUEST_TYPE_LABEL[item.requestType] || '';
-          return {
-            id: String(item.id),
-            title: `${statusLabel || 'إشعار'}: ${typeLabel} #${item.requestId}`,
-            description:
+          const isProposal = item.requestType === 0;
+          let title = '';
+          let description = '';
+
+          if (isProposal) {
+            if (item.status === 3) {
+              title = `تم انشاء مقترح: مقترح #${item.requestId}`;
+              description = 'تم تقديم مقترح خطر جديد ويحتاج إلى مراجعة.';
+            } else if (item.status === 1) {
+              title = `تم قبول مقترح: مقترح #${item.requestId}`;
+              description = 'تم قبول مقترح الخطر الخاص بك وضمه إلى دليل المخاطر المعتمدة.';
+            } else if (item.status === 0) {
+              title = `تم رفض مقترح: مقترح #${item.requestId}`;
+              description = 'تم رفض مقترح الخطر الخاص بك.';
+            } else {
+              title = `تحديث مقترح: مقترح #${item.requestId}`;
+              description = 'تم تحديث مقترح الخطر بنجاح.';
+            }
+          } else {
+            const statusLabel = item.status != null ? NOTIFICATION_STATUS_LABEL[item.status] : '';
+            const typeLabel = REQUEST_TYPE_LABEL[item.requestType] || '';
+            title = `${statusLabel || 'إشعار'}: ${typeLabel} #${item.requestId}`;
+            description =
               statusLabel === 'تم الرفض'
                 ? 'تم رفض طلبك ونقله إلى الأرشيف التاريخي.'
                 : statusLabel === 'تم القبول'
                   ? 'تم قبول طلبك ونقله إلى سجلات المخاطر المعتمدة.'
-                  : 'تم تحديث حالة الطلب الخاص بك بنجاح.',
+                  : 'تم تحديث حالة الطلب الخاص بك بنجاح.';
+          }
+
+          return {
+            id: String(item.id),
+            title,
+            description,
             createdAt: item.createdAt,
             route: '/requests',
             status: item.status,

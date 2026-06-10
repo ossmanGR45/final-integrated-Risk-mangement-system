@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QM.DataAccess.Data;
 
@@ -11,9 +12,11 @@ using QM.DataAccess.Data;
 namespace QM.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260603072034_AddRiskNameToNotification")]
+    partial class AddRiskNameToNotification
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,7 +60,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLogs", (string)null);
+                    b.ToTable("AuditLogs");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
@@ -233,7 +236,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Actions", (string)null);
+                    b.ToTable("Actions");
                 });
 
             modelBuilder.Entity("QM.Models.DataModels.Category", b =>
@@ -250,7 +253,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("QM.Models.DataModels.Cause", b =>
@@ -270,7 +273,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Causes", (string)null);
+                    b.ToTable("Causes");
                 });
 
             modelBuilder.Entity("QM.Models.DataModels.Department", b =>
@@ -287,7 +290,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Departments", (string)null);
+                    b.ToTable("Departments");
                 });
 
             modelBuilder.Entity("QM.Models.DataModels.NotificationModel", b =>
@@ -321,7 +324,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("QM.Models.DataModels.Request", b =>
@@ -389,7 +392,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RiskRequests", (string)null);
+                    b.ToTable("RiskRequests");
                 });
 
             modelBuilder.Entity("QM.Models.DataModels.Responsible", b =>
@@ -415,7 +418,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Responsible", (string)null);
+                    b.ToTable("Responsible");
                 });
 
             modelBuilder.Entity("QM.Models.DataModels.Risk", b =>
@@ -470,7 +473,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Risks", (string)null);
+                    b.ToTable("Risks");
                 });
 
             modelBuilder.Entity("QM.Models.DataModels.StrategicGoal", b =>
@@ -487,7 +490,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("StrategicGoals", (string)null);
+                    b.ToTable("StrategicGoals");
                 });
 
             modelBuilder.Entity("QM.Models.DataModels.User", b =>
@@ -589,7 +592,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasIndex("CauseID");
 
-                    b.ToTable("ActionCauseMappings", (string)null);
+                    b.ToTable("ActionCauseMappings");
                 });
 
             modelBuilder.Entity("QM.Models.Mapping.RequestActionMapping", b =>
@@ -613,7 +616,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasIndex("RequestID");
 
-                    b.ToTable("RequestActionMappings", (string)null);
+                    b.ToTable("RequestActionMappings");
                 });
 
             modelBuilder.Entity("QM.Models.Mapping.RequestCauseMapping", b =>
@@ -637,7 +640,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasIndex("RequestID");
 
-                    b.ToTable("RequestCauseMappings", (string)null);
+                    b.ToTable("RequestCauseMappings");
                 });
 
             modelBuilder.Entity("QM.Models.Mapping.RequestStrategicGoalMapping", b =>
@@ -661,7 +664,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasIndex("StrategicGoalID");
 
-                    b.ToTable("RequestStrategicGoalMapping", (string)null);
+                    b.ToTable("RequestStrategicGoalMapping");
                 });
 
             modelBuilder.Entity("QM.Models.Mapping.RiskActionMapping", b =>
@@ -688,7 +691,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasIndex("RiskID");
 
-                    b.ToTable("RiskActionMappings", (string)null);
+                    b.ToTable("RiskActionMappings");
                 });
 
             modelBuilder.Entity("QM.Models.Mapping.RiskCauseMapping", b =>
@@ -715,7 +718,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasIndex("RiskID");
 
-                    b.ToTable("RiskCauseMappings", (string)null);
+                    b.ToTable("RiskCauseMappings");
                 });
 
             modelBuilder.Entity("QM.Models.Mapping.RiskStrategicGoalMapping", b =>
@@ -742,7 +745,7 @@ namespace QM.DataAccess.Migrations
 
                     b.HasIndex("StrategicGoalId");
 
-                    b.ToTable("RiskGoalMappings", (string)null);
+                    b.ToTable("RiskGoalMappings");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>

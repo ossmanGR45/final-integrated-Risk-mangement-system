@@ -1,4 +1,4 @@
-﻿using LinqKit;
+using LinqKit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QM.DataAccess.Managers;
@@ -36,8 +36,43 @@ namespace QM.Controller
                 return Unauthorized("User isn't logged in.");
 
             var isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+            var isManager = string.Equals(userRole, "Manager", StringComparison.OrdinalIgnoreCase);
+            var isInitiator = string.Equals(userRole, "Initi", StringComparison.OrdinalIgnoreCase) ||
+                              string.Equals(userRole, "Initiator", StringComparison.OrdinalIgnoreCase);
 
             var filter = PredicateBuilder.New<NotificationModel>(true);
+
+            // Allow notifications triggered by risk requests (Incident) and custom risk proposals (Risk)
+            filter = filter.And(n => n.requestType == QM.Models.Enums.requestType.Incident || n.requestType == QM.Models.Enums.requestType.Risk);
+
+            // Role-based status filtering:
+            // - Admin: Only gets 'created' notifications
+            // - Manager: Gets 'created', 'accept', and 'reject' notifications
+            // - Initiator: Only gets 'accept' and 'reject' notifications
+            if (isAdmin)
+            {
+                filter = filter.And(n => n.status == notificationType.created);
+            }
+            else if (isManager)
+            {
+                filter = filter.And(n =>
+                    n.status == notificationType.created ||
+                    n.status == notificationType.accept ||
+                    n.status == notificationType.reject
+                );
+            }
+            else if (isInitiator)
+            {
+                filter = filter.And(n =>
+                    n.status == notificationType.accept ||
+                    n.status == notificationType.reject
+                );
+            }
+            else
+            {
+                // Any other role: no notifications
+                filter = filter.And(n => false);
+            }
 
             // Non-admin users only ever see their own notifications, regardless of the
             // userId query param. Admins can pass userId to look at someone else's.

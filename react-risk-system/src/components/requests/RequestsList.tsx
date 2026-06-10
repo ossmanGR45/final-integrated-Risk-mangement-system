@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Check, X } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { UserRole } from '../../types';
 import NewRequestForm from './NewRequestForm';
 import { API_BASE } from '../../api/http';
@@ -11,6 +13,7 @@ import {
   UiStatus,
 } from '../../utils/statusMapping';
 import Pagination from '../common/Pagination';
+import CustomSelect from '../shared/CustomSelect';
 
 // Shape returned by `/api/requests` (the backend Request entity).
 interface ApiRequest {
@@ -176,6 +179,22 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
     status: '',
   });
 
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000);
+  };
+
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.message) {
+      showNotification(location.state.message, location.state.type || 'success');
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   const token = localStorage.getItem('authToken');
 
   const parseJsonSafe = async (response: Response) => {
@@ -273,18 +292,18 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
 
   const getStatusMeta = (req: WorkflowRequest) => {
     if (req.status === 'accepted') {
-      return { label: 'مقبول', color: 'bg-green-500' };
+      return { label: 'مقبول', color: '#22c55e' };
     }
     if (req.status === 'rejected') {
-      return { label: 'مرفوض', color: 'bg-red-500' };
+      return { label: 'مرفوض', color: '#ef4444' };
     }
     if (req.currentReviewerRole === 'admin') {
-      return { label: 'بانتظار الأدمن', color: 'bg-indigo-500' };
+      return { label: 'بانتظار الأدمن', color: '#6366f1' };
     }
     if (req.currentReviewerRole === 'manager') {
-      return { label: 'بانتظار المدير', color: 'bg-yellow-500' };
+      return { label: 'بانتظار المدير', color: '#eab308' };
     }
-    return { label: 'قيد الانتظار', color: 'bg-yellow-500' };
+    return { label: 'قيد الانتظار', color: '#eab308' };
   };
 
   const filteredData = useMemo(() => {
@@ -428,11 +447,11 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
     const result = await parseJsonSafe(response);
 
     if (!response.ok) {
-      alert(result?.message || 'فشل إعادة الإرسال');
+      showNotification(result?.message || 'فشل إعادة الإرسال', 'error');
       return;
     }
 
-    alert(result?.message || 'تمت إعادة الإرسال');
+    showNotification(result?.message || 'تمت إعادة الإرسال', 'success');
     closeModal();
     fetchRequests();
   };
@@ -444,7 +463,11 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
       buildStatusUpdatePayload(selectedRequest, { status: STATUS_FORWARD_TO_ADMIN }),
     );
 
-    alert(result.data?.message || 'تم التحويل');
+    if (result.ok) {
+      showNotification(result.data?.message || 'تم التحويل', 'success');
+    } else {
+      showNotification(result.data?.message || 'فشل التحويل', 'error');
+    }
     closeModal();
     fetchRequests();
   };
@@ -459,7 +482,11 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
       }),
     );
 
-    alert(result.data?.message || 'تم الرفض');
+    if (result.ok) {
+      showNotification(result.data?.message || 'تم الرفض', 'success');
+    } else {
+      showNotification(result.data?.message || 'فشل الرفض', 'error');
+    }
     closeModal();
     fetchRequests();
   };
@@ -471,7 +498,11 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
       buildStatusUpdatePayload(selectedRequest, { status: STATUS_ACCEPT }),
     );
 
-    alert(result.data?.message || 'تم القبول');
+    if (result.ok) {
+      showNotification(result.data?.message || 'تم القبول', 'success');
+    } else {
+      showNotification(result.data?.message || 'فشل القبول', 'error');
+    }
     closeModal();
     fetchRequests();
   };
@@ -486,7 +517,11 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
       }),
     );
 
-    alert(result.data?.message || 'تم الرفض');
+    if (result.ok) {
+      showNotification(result.data?.message || 'تم الرفض', 'success');
+    } else {
+      showNotification(result.data?.message || 'فشل الرفض', 'error');
+    }
     closeModal();
     fetchRequests();
   };
@@ -545,55 +580,55 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
             onChange={e => setFilters({ ...filters, name: e.target.value })}
           />
 
-          <select
-            className="border rounded px-4 py-3 text-lg"
+          <CustomSelect
             value={filters.category}
-            onChange={e => setFilters({ ...filters, category: e.target.value })}
-          >
-            <option value="">كل الفئات</option>
-            {categories.map(cat => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+            onChange={value => setFilters({ ...filters, category: value })}
+            options={[
+              { value: '', label: 'كل الفئات' },
+              ...categories.map(cat => ({ value: cat, label: cat }))
+            ]}
+            placeholder="كل الفئات"
+          />
 
           {mode === 'history' ? (
-            <select
-              className="border rounded px-4 py-3 text-lg"
+            <CustomSelect
               value={filters.status}
-              onChange={e => setFilters({ ...filters, status: e.target.value })}
-            >
-              <option value="">كل الحالات</option>
-              <option value="accepted">مقبول</option>
-              <option value="rejected">مرفوض</option>
-            </select>
+              onChange={value => setFilters({ ...filters, status: value })}
+              options={[
+                { value: '', label: 'كل الحالات' },
+                { value: 'accepted', label: 'مقبول' },
+                { value: 'rejected', label: 'مرفوض' }
+              ]}
+              placeholder="كل الحالات"
+            />
           ) : (
-            <select
-              className="border rounded px-4 py-3 text-lg"
+            <CustomSelect
               value={filters.status}
-              onChange={e => setFilters({ ...filters, status: e.target.value })}
-            >
-              <option value="">كل الحالات</option>
-              <option value="waiting_admin">بانتظار الأدمن</option>
-              <option value="waiting_manager">بانتظار المدير</option>
-            </select>
+              onChange={value => setFilters({ ...filters, status: value })}
+              options={[
+                { value: '', label: 'كل الحالات' },
+                { value: 'waiting_admin', label: 'بانتظار الأدمن' },
+                { value: 'waiting_manager', label: 'بانتظار المدير' }
+              ]}
+              placeholder="كل الحالات"
+            />
           )}
 
-          <select
-            className="border rounded px-4 py-3 text-lg"
+          <CustomSelect
             value={sortBy}
-            onChange={e => setSortBy(e.target.value as SortOption)}
-          >
-            <option value="date_desc">ترتيب: الأحدث أولاً</option>
-            <option value="date_asc">ترتيب: الأقدم أولاً</option>
-            <option value="name_asc">ترتيب: اسم الخطر أ - ي</option>
-            <option value="name_desc">ترتيب: اسم الخطر ي - أ</option>
-            <option value="id_asc">ترتيب: رقم الطلب تصاعدي</option>
-            <option value="id_desc">ترتيب: رقم الطلب تنازلي</option>
-            <option value="status_asc">ترتيب: حسب الحالة</option>
-            <option value="category_asc">ترتيب: حسب الفئة</option>
-          </select>
+            onChange={value => setSortBy(value as SortOption)}
+            options={[
+              { value: 'date_desc', label: 'ترتيب: الأحدث أولاً' },
+              { value: 'date_asc', label: 'ترتيب: الأقدم أولاً' },
+              { value: 'name_asc', label: 'ترتيب: اسم الخطر أ - ي' },
+              { value: 'name_desc', label: 'ترتيب: اسم الخطر ي - أ' },
+              { value: 'id_asc', label: 'ترتيب: رقم الطلب تصاعدي' },
+              { value: 'id_desc', label: 'ترتيب: رقم الطلب تنازلي' },
+              { value: 'status_asc', label: 'ترتيب: حسب الحالة' },
+              { value: 'category_asc', label: 'ترتيب: حسب الفئة' }
+            ]}
+            placeholder="الترتيب"
+          />
         </div>
       </div>
 
@@ -626,7 +661,8 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
                   <td className="px-6 py-4 text-center text-lg">{req.category}</td>
                   <td className="px-6 py-4 text-center">
                     <span
-                      className={`${statusMeta.color} text-white px-6 py-2 rounded-full text-lg font-medium`}
+                      style={{ backgroundColor: statusMeta.color }}
+                      className="text-white px-6 py-2 rounded-full text-lg font-medium whitespace-nowrap inline-block"
                     >
                       {statusMeta.label}
                     </span>
@@ -765,6 +801,16 @@ const RequestsList: React.FC<RequestsListProps> = ({ role, mode = 'pending' }) =
               </div>
             )}
           </div>
+        </div>
+      )}
+      {notification && (
+        <div
+          className={`fixed bottom-5 left-5 z-[200] px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 text-white border transition-all transform translate-y-0 ${
+            notification.type === 'success' ? 'bg-green-600 border-green-700' : 'bg-red-600 border-red-700'
+          }`}
+        >
+          {notification.type === 'success' ? <Check size={20} /> : <X size={20} />}
+          <span className="font-bold">{notification.message}</span>
         </div>
       )}
     </div>

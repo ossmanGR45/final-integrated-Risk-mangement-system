@@ -17,10 +17,12 @@ import {
   ChevronLeft,
   Plus,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { RiskMode } from '../../types';
 import { API_BASE } from '../../api/http';
+import CustomSelect from '../shared/CustomSelect';
 import {
   calculateRiskScore,
   getRiskColor,
@@ -118,6 +120,39 @@ interface RiskItem {
 const USER_DEPARTMENT = 'كلية تقنية المعلومات';
 const EMPTY_LIST = [''];
 
+const AutoResizingTextarea: React.FC<{
+  value: string;
+  disabled?: boolean;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}> = ({ value, disabled, onChange, placeholder }) => {
+  const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
+
+  const adjustHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  };
+
+  React.useEffect(() => {
+    adjustHeight();
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      disabled={disabled}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={1}
+      className="flex-1 px-4 py-3 rounded-xl border border-gray-300 bg-white text-right resize-none overflow-hidden min-h-[3.5rem] leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-80 disabled:bg-gray-50"
+    />
+  );
+};
+
 const RiskLevelsInfo = () => (
   <div className="bg-white border rounded-2xl p-5 text-sm space-y-3 shadow-sm h-full">
     <div className="flex items-center gap-2 font-bold text-base">
@@ -178,6 +213,13 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
     semester: 'first' as SemesterValue,
     customResponsible: ''
   });
+
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000);
+  };
 
   const [causes, setCauses] = useState<string[]>(EMPTY_LIST);
   const [responseActions, setResponseActions] = useState<string[]>(EMPTY_LIST);
@@ -531,24 +573,29 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
     suggestions: string[],
     selectedSuggestion: string,
     onSelectSuggestion: (value: string) => void,
-    onApplySuggestion: () => void,
     suggestionPlaceholder: string,
-    icon: React.ReactNode
+    icon: React.ReactNode,
+    required: boolean = false
   ) => {
     const isOpen = expandedSections[key];
     const itemsCount = countFilled(values);
 
     return (
-      <div className="border border-gray-200 rounded-2xl bg-white overflow-hidden">
+      <div className="border border-gray-200 rounded-2xl bg-white">
         <button
           type="button"
           onClick={() => toggleSection(key)}
-          className="w-full px-5 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          className={`w-full px-6 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors rounded-t-2xl ${
+            !isOpen ? 'rounded-b-2xl' : ''
+          }`}
         >
           <div className="flex items-center gap-3 text-right">
             <div className="text-gray-600">{icon}</div>
             <div className="text-right">
-              <h4 className="text-xl font-bold text-gray-800">{title}</h4>
+              <h4 className="text-xl font-bold text-gray-800">
+                {title}
+                {required && <span className="text-red-500 mr-1">*</span>}
+              </h4>
             </div>
           </div>
 
@@ -556,34 +603,21 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
             <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
               {itemsCount} عنصر
             </span>
-            {isOpen ? <ChevronDown size={22} /> : <ChevronLeft size={22} />}
+            {isOpen ? <ChevronDown size={24} /> : <ChevronLeft size={24} />}
           </div>
         </button>
 
         {isOpen && (
-          <div className="border-t border-gray-200 p-5 space-y-4 bg-gray-50">
+          <div className="border-t border-gray-200 p-6 space-y-4 bg-gray-50 rounded-b-2xl">
             {!disabled && (
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={onApplySuggestion}
-                  className="px-5 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 whitespace-nowrap"
-                >
-                  إضافة من القائمة
-                </button>
-
-                <select
+              <div className="w-full">
+                <CustomSelect
                   value={selectedSuggestion}
-                  onChange={e => onSelectSuggestion(e.target.value)}
-                  className="flex-1 px-4 py-3 rounded-xl border border-gray-300 bg-white text-right"
-                >
-                  <option value="">{suggestionPlaceholder}</option>
-                  {suggestions.map((item, index) => (
-                    <option key={`${title}-suggestion-${index}`} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
+                  onChange={onSelectSuggestion}
+                  options={suggestions.map(item => ({ value: item, label: item }))}
+                  placeholder={suggestionPlaceholder}
+                  className="w-full"
+                />
               </div>
             )}
 
@@ -595,16 +629,15 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
                     onClick={() => removeListItem(setter, index)}
                     className="px-4 py-3 bg-red-100 text-red-700 rounded-xl hover:bg-red-200"
                   >
-                    <Trash2 size={16} />
+                    حذف
                   </button>
                 )}
 
-                <input
+                <AutoResizingTextarea
                   value={item}
                   disabled={disabled}
-                  onChange={e => updateListItem(setter, index, e.target.value)}
+                  onChange={val => updateListItem(setter, index, val)}
                   placeholder={placeholder}
-                  className="flex-1 px-4 py-3 rounded-xl border border-gray-300 bg-white text-right"
                 />
               </div>
             ))}
@@ -642,7 +675,7 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
     e.preventDefault();
 
     if (!selectedRisk && !strategicGoal) {
-      alert('الرجاء اختيار الغاية الاستراتيجية للخطر');
+      showNotification('الرجاء اختيار الغاية الاستراتيجية للخطر', 'error');
       return;
     }
 
@@ -737,43 +770,25 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
                     size={18}
                   />
-                  <select
-                    className="w-full pl-4 pr-12 py-4 rounded-xl border bg-gray-50 text-right"
+                  <CustomSelect
                     value={category}
                     disabled={disabled || isLoadingMasterData}
-                    onChange={e => handleCategoryChange(e.target.value)}
-                    required
-                  >
-                    <option value="">اختر الفئة</option>
-                    {categories.map(item => (
-                      <option key={item.id} value={item.categoryName}>
-                        {item.categoryName}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={handleCategoryChange}
+                    options={categories.map(item => ({ value: item.categoryName, label: item.categoryName }))}
+                    placeholder="اختر الفئة"
+                  />
                 </div>
               </div>
 
               <div>
                 <label className="block mb-3 text-right font-semibold">اسم الخطر</label>
-                <select
-                  className={`w-full px-4 py-4 rounded-xl border text-right ${
-                    !category ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-50'
-                  }`}
-                  value={riskName}
-                  disabled={disabled || isLoadingMasterData || !category}
-                  onChange={e => setRiskName(e.target.value)}
-                  required
-                >
-                  <option value="">
-                    {category ? 'اختر خطرًا' : 'اختر الفئة أولًا'}
-                  </option>
-                  {selectedRiskOptions.map(risk => (
-                    <option key={risk.id} value={risk.riskName}>
-                      {risk.riskName}
-                    </option>
-                  ))}
-                </select>
+                 <CustomSelect
+                   value={riskName}
+                   disabled={disabled || isLoadingMasterData || !category}
+                   onChange={setRiskName}
+                   options={selectedRiskOptions.map(risk => ({ value: risk.riskName, label: risk.riskName }))}
+                   placeholder={category ? 'اختر خطرًا' : 'اختر الفئة أولًا'}
+                 />
               </div>
 
               <div>
@@ -829,19 +844,12 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
                       )}
                     </div>
                   ) : (
-                    <select
+                    <CustomSelect
                       value={strategicGoal}
-                      onChange={e => setStrategicGoal(e.target.value)}
-                      className="w-full px-4 py-4 rounded-xl border bg-white text-right font-semibold"
-                      required
-                    >
-                      <option value="">اختر الغاية الاستراتيجية</option>
-                      {strategicGoalOptions.map((goal, index) => (
-                        <option key={`${goal}-${index}`} value={goal}>
-                          {goal}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setStrategicGoal}
+                      options={strategicGoalOptions.map((goal) => ({ value: goal, label: goal }))}
+                      placeholder="اختر الغاية الاستراتيجية"
+                    />
                   )}
                 </div>
               )}
@@ -922,19 +930,13 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
                   <Building2 size={18} className="text-gray-500" />
                   <span>الجهة المسؤولة عن معالجة الخطر</span>
                 </label>
-                <select
+                <CustomSelect
                   value={responsibleId}
                   disabled={disabled || isLoadingMasterData}
-                  onChange={e => setResponsibleId(e.target.value)}
-                  className="w-full px-4 py-4 rounded-xl border bg-gray-50 text-right"
-                >
-                  <option value="">اختر الجهة المسؤولة</option>
-                  {responsibleEntities.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {item.entityName}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setResponsibleId}
+                  options={responsibleEntities.map(item => ({ value: String(item.id), label: item.entityName }))}
+                  placeholder="اختر الجهة المسؤولة"
+                />
               </div>
 
               <div>
@@ -942,19 +944,13 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
                   <User size={18} className="text-gray-500" />
                   <span>الشخص المسؤول</span>
                 </label>
-                <select
+                <CustomSelect
                   value={responsibleId}
                   disabled={true}
-                  onChange={e => setResponsibleId(e.target.value)}
-                  className="w-full px-4 py-4 rounded-xl border bg-gray-100 text-gray-700 cursor-not-allowed text-right font-semibold"
-                >
-                  <option value="">اختر الشخص المسؤول</option>
-                  {responsibleEntities.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {item.contactName}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setResponsibleId}
+                  options={responsibleEntities.map(item => ({ value: String(item.id), label: item.contactName }))}
+                  placeholder="اختر الشخص المسؤول"
+                />
               </div>
 
               <div>
@@ -987,21 +983,22 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
                 <label className="block mb-3 text-right font-semibold">
                   {mode === 'before' ? 'الوقت المتوقع للحدوث' : 'الفصل الذي وقع فيه الخطر'}
                 </label>
-                <select
+                <CustomSelect
                   value={formData.semester}
-                  onChange={e =>
+                  onChange={(value) =>
                     setFormData(prev => ({
                       ...prev,
-                      semester: e.target.value as SemesterValue
+                      semester: value as SemesterValue
                     }))
                   }
                   disabled={disabled}
-                  className="w-full px-4 py-4 rounded-xl border bg-gray-50 text-right"
-                >
-                  <option value="first">الفصل الأول</option>
-                  <option value="second">الفصل الثاني</option>
-                  <option value="summer">الفصل الصيفي</option>
-                </select>
+                  options={[
+                    { value: 'first', label: 'الفصل الأول' },
+                    { value: 'second', label: 'الفصل الثاني' },
+                    { value: 'summer', label: 'الفصل الصيفي' }
+                  ]}
+                  placeholder="اختر الفصل"
+                />
               </div>
 
               <div>
@@ -1031,10 +1028,9 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
               'أدخل سببًا محتملاً',
               causeTemplates,
               selectedCauseTemplate,
-              setSelectedCauseTemplate,
-              () =>
+              (value) =>
                 addTemplateValue(
-                  selectedCauseTemplate,
+                  value,
                   causes,
                   setCauses,
                   () => setSelectedCauseTemplate('')
@@ -1051,10 +1047,9 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
               'أدخل إجراءً عند وقوع الخطر',
               actionTemplates,
               selectedActionTemplate,
-              setSelectedActionTemplate,
-              () =>
+              (value) =>
                 addTemplateValue(
-                  selectedActionTemplate,
+                  value,
                   responseActions,
                   setResponseActions,
                   () => setSelectedActionTemplate('')
@@ -1071,10 +1066,9 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
               'أدخل إجراءً وقائيًا',
               preventiveTemplates,
               selectedPreventiveTemplate,
-              setSelectedPreventiveTemplate,
-              () =>
+              (value) =>
                 addTemplateValue(
-                  selectedPreventiveTemplate,
+                  value,
                   preventiveActions,
                   setPreventiveActions,
                   () => setSelectedPreventiveTemplate('')
@@ -1152,6 +1146,16 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({
           </div>
         </div>
       </form>
+      {notification && (
+        <div
+          className={`fixed bottom-5 left-5 z-[200] px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 text-white border transition-all transform translate-y-0 ${
+            notification.type === 'success' ? 'bg-green-600 border-green-700' : 'bg-red-600 border-red-700'
+          }`}
+        >
+          {notification.type === 'success' ? <Check size={20} /> : <X size={20} />}
+          <span className="font-bold">{notification.message}</span>
+        </div>
+      )}
     </div>
   );
 };

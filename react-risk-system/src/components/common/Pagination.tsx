@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import CustomSelect from '../shared/CustomSelect';
 
 interface PaginationProps {
   currentPage: number;
@@ -76,20 +77,19 @@ const Pagination: React.FC<PaginationProps> = ({
         {/* Page Size Selector */}
         <div className="flex items-center gap-2">
           <span className="text-lg text-gray-400">سجل في الصفحة:</span>
-          <select
+          <CustomSelect
             value={itemsPerPage}
-            onChange={(e) => {
-              const val = Number(e.target.value);
-              onItemsPerPageChange(val);
-            }}
-            className="border border-gray-200 bg-white rounded-lg px-3 py-2 text-lg font-bold text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 transition-colors cursor-pointer"
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-            <option value={100000}>الكل</option>
-          </select>
+            onChange={(value) => onItemsPerPageChange(Number(value))}
+            options={[
+              { value: 5, label: '5' },
+              { value: 10, label: '10' },
+              { value: 25, label: '25' },
+              { value: 50, label: '50' },
+              { value: 100000, label: 'الكل' }
+            ]}
+            placeholder="حدد الحجم"
+            className="w-28"
+          />
         </div>
 
         {/* Page Navigation */}

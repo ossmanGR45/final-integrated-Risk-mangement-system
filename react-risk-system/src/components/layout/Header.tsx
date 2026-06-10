@@ -201,18 +201,41 @@ const Header: React.FC = () => {
           )
           .slice(0, 8)
           .map(item => {
-            const statusLabel =
-              item.status != null ? NOTIFICATION_STATUS_LABEL[item.status] : '';
-            const typeLabel = REQUEST_TYPE_LABEL[item.requestType] || '';
-            return {
-              id: String(item.id),
-              title: `${statusLabel || 'إشعار'}: ${typeLabel} #${item.requestId}`,
-              description:
+            const isProposal = item.requestType === 0;
+            let title = '';
+            let description = '';
+
+            if (isProposal) {
+              if (item.status === 3) {
+                title = `تم انشاء مقترح: مقترح #${item.requestId}`;
+                description = 'تم تقديم مقترح خطر جديد';
+              } else if (item.status === 1) {
+                title = `تم قبول مقترح: مقترح #${item.requestId}`;
+                description = 'تم قبول مقترح الخطر';
+              } else if (item.status === 0) {
+                title = `تم رفض مقترح: مقترح #${item.requestId}`;
+                description = 'تم رفض مقترح الخطر';
+              } else {
+                title = `تحديث مقترح: مقترح #${item.requestId}`;
+                description = 'تم تحديث مقترح الخطر';
+              }
+            } else {
+              const statusLabel =
+                item.status != null ? NOTIFICATION_STATUS_LABEL[item.status] : '';
+              const typeLabel = REQUEST_TYPE_LABEL[item.requestType] || '';
+              title = `${statusLabel || 'إشعار'}: ${typeLabel} #${item.requestId}`;
+              description =
                 statusLabel === 'تم الرفض'
                   ? 'تم رفض طلبك'
                   : statusLabel === 'تم القبول'
                     ? 'تم قبول طلبك'
-                    : 'يوجد تحديث جديد',
+                    : 'يوجد تحديث جديد';
+            }
+
+            return {
+              id: String(item.id),
+              title,
+              description,
               createdAt: item.createdAt,
               route: '/requests'
             };

@@ -3,6 +3,7 @@ import { UserRole } from '../../types';
 import { uiStatusFromApi, UiStatus } from '../../utils/statusMapping';
 import { API_BASE } from '../../api/http';
 import Pagination from '../common/Pagination';
+import CustomSelect from '../shared/CustomSelect';
 import NewRequestForm from './NewRequestForm';
 import { FileDown } from 'lucide-react';
 
@@ -37,10 +38,10 @@ interface Props {
 // Status colour + label maps — 'redirected' is the manager-only state.
 // -----------------------------------------------------------------------
 const statusColor: Record<DisplayStatus, string> = {
-  pending: 'bg-yellow-500',
-  accepted: 'bg-green-500',
-  rejected: 'bg-red-500',
-  redirected: 'bg-blue-500',
+  pending: '#eab308',
+  accepted: '#22c55e',
+  rejected: '#ef4444',
+  redirected: '#3b82f6',
 };
 
 const statusLabel: Record<DisplayStatus, string> = {
@@ -561,25 +562,25 @@ ${responsiblePhone || responsibleEmail ? `<tr><th>الهاتف</th><th>البر�
             value={filters.user}
             onChange={e => setFilters({ ...filters, user: e.target.value })}
           />
-          <select
-            className="border rounded px-4 py-3 text-lg"
+          <CustomSelect
             value={filters.type}
-            onChange={e => setFilters({ ...filters, type: e.target.value })}
-          >
-            <option value="">كل الأنواع</option>
-            <option value="logged">خطر مسجل</option>
-            <option value="suggested">خطر مقترح</option>
-          </select>
-          <select
-            className="border rounded px-4 py-3 text-lg"
+            onChange={value => setFilters({ ...filters, type: value })}
+            options={[
+              { value: '', label: 'كل الأنواع' },
+              { value: 'logged', label: 'خطر مسجل' },
+              { value: 'suggested', label: 'خطر مقترح' }
+            ]}
+            placeholder="كل الأنواع"
+          />
+          <CustomSelect
             value={filters.status}
-            onChange={e => setFilters({ ...filters, status: e.target.value })}
-          >
-            <option value="">كل الحالات</option>
-            {statusFilterOptions[role].map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+            onChange={value => setFilters({ ...filters, status: value })}
+            options={[
+              { value: '', label: 'كل الحالات' },
+              ...statusFilterOptions[role].map(opt => ({ value: opt.value, label: opt.label }))
+            ]}
+            placeholder="كل الحالات"
+          />
         </div>
       </div>
 
@@ -614,7 +615,8 @@ ${responsiblePhone || responsibleEmail ? `<tr><th>الهاتف</th><th>البر�
                 <td className="px-6 py-4 text-center text-lg">{row.category || '—'}</td>
                 <td className="px-6 py-4 text-center">
                   <span
-                    className={`${statusColor[row.displayStatus]} text-white px-6 py-2 rounded-full text-lg font-medium`}
+                    style={{ backgroundColor: statusColor[row.displayStatus] }}
+                    className="text-white px-6 py-2 rounded-full text-lg font-medium inline-block"
                   >
                     {statusLabel[row.displayStatus]}
                   </span>

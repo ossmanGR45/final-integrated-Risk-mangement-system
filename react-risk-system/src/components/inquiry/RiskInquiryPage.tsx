@@ -10,6 +10,7 @@ import {
 import { calculateRiskScore, getRiskColor, getRiskLabel } from '../../utils/riskCalculations';
 import RiskDetailModal from '../shared/RiskDetailModal';
 import { API_BASE } from '../../api/http';
+import CustomSelect from '../shared/CustomSelect';
 
 interface Category {
   id: number;
@@ -451,16 +452,17 @@ const RiskInquiryPage: React.FC = () => {
           </div>
 
           <div>
-            <select
+            <CustomSelect
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'latest' | 'name' | 'score-high' | 'score-low')}
-              className="w-full border rounded-xl px-4 py-4 text-right bg-white"
-            >
-              <option value="latest">الأحدث</option>
-              <option value="name">حسب الاسم</option>
-              <option value="score-high">درجة الخطر من الأعلى</option>
-              <option value="score-low">درجة الخطر من الأقل</option>
-            </select>
+              onChange={(value) => setSortBy(value as 'latest' | 'name' | 'score-high' | 'score-low')}
+              options={[
+                { value: 'latest', label: 'الأحدث' },
+                { value: 'name', label: 'حسب الاسم' },
+                { value: 'score-high', label: 'درجة الخطر من الأعلى' },
+                { value: 'score-low', label: 'درجة الخطر من الأقل' }
+              ]}
+              placeholder="الترتيب"
+            />
           </div>
 
           <div className="flex items-center justify-between pt-2">

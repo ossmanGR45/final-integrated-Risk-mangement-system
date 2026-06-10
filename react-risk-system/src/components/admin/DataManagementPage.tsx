@@ -14,6 +14,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import AddNewRisk from './AddNewRisk';
+import ConfirmDialog from '../shared/ConfirmDialog';
 import { API_BASE } from '../../api/http';
 
 
@@ -70,6 +71,9 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
+
+  // Confirm Delete Dialog State
+  const [pendingDeleteItem, setPendingDeleteItem] = useState<CatalogItem | null>(null);
 
   // For Risks editing (renders AddNewRisk component inside our screen context)
   const [isRiskFormActive, setIsRiskFormActive] = useState(false);
@@ -530,9 +534,14 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
     }
   };
 
-  const handleDelete = async (item: CatalogItem) => {
-    const confirmDelete = window.confirm('هل أنت متأكد من رغبتك في حذف هذا العنصر نهائياً؟');
-    if (!confirmDelete) return;
+  const handleDeleteRequest = (item: CatalogItem) => {
+    setPendingDeleteItem(item);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!pendingDeleteItem) return;
+    const item = pendingDeleteItem;
+    setPendingDeleteItem(null);
 
     try {
       const token = localStorage.getItem('authToken');
@@ -589,6 +598,13 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
 
   return (
     <div className="space-y-6">
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={!!pendingDeleteItem}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setPendingDeleteItem(null)}
+      />
+
       {/* Toast Notification */}
       {notification && (
         <div
@@ -673,7 +689,7 @@ export default function DataManagementPage({ type }: DataManagementPageProps) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(item)}
+                      onClick={() => handleDeleteRequest(item)}
                       title="حذف"
                       className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-red-50"
                     >

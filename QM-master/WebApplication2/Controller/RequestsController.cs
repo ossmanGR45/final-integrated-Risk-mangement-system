@@ -305,21 +305,23 @@ namespace QM.Controller
             Request request, RequestDto dto, bool isNew, string? userRole, int actingUserId)
         {
             var _notifManager = new Manager<NotificationModel>(_uow);
-            notificationType finalNotifType;
+            var ctx = _uow.GetContext();
 
             if (isNew)
             {
-                // New record: stays in InProgress (set on create above).
-                finalNotifType = notificationType.created;
-
-                await _notifManager.AddUpdateAsync(new NotificationModel
+                // Find initiator's manager. If found, send "created" notification.
+                var creatorUser = await ctx.Users.FirstOrDefaultAsync(u => u.Id == actingUserId);
+                if (creatorUser != null && creatorUser.ManagerId.HasValue)
                 {
-                    requestId = request.Id,
-                    UserId = actingUserId,            // The creator gets a "created" trace.
-                    status = finalNotifType,
-                    requestType = requestType.Incident,
-                    createdAt = DateTime.Now
-                });
+                    await _notifManager.AddUpdateAsync(new NotificationModel
+                    {
+                        requestId = request.Id,
+                        UserId = creatorUser.ManagerId.Value,
+                        status = notificationType.created,
+                        requestType = requestType.Incident,
+                        createdAt = DateTime.Now
+                    });
+                }
                 return;
             }
 
@@ -329,32 +331,59 @@ namespace QM.Controller
                 request.Status = dto.Status.Value;
                 request.rejectReason = dto.rejectReason;
 
+                var creatorId = request.UserId ?? actingUserId;
+                var creatorUser = await ctx.Users.FirstOrDefaultAsync(u => u.Id == creatorId);
+
                 switch (dto.Status.Value)
                 {
                     case RequestStatus.Accepted:
-                        finalNotifType = notificationType.accept;
-                        // Notify the original initiator.
+                        // 1. Notify the original initiator
                         await _notifManager.AddUpdateAsync(new NotificationModel
                         {
                             requestId = request.Id,
-                            UserId = request.UserId ?? actingUserId,
-                            status = finalNotifType,
+                            UserId = creatorId,
+                            status = notificationType.accept,
                             requestType = requestType.Incident,
                             createdAt = DateTime.Now
                         });
+
+                        // 2. Notify the initiator's manager
+                        if (creatorUser != null && creatorUser.ManagerId.HasValue)
+                        {
+                            await _notifManager.AddUpdateAsync(new NotificationModel
+                            {
+                                requestId = request.Id,
+                                UserId = creatorUser.ManagerId.Value,
+                                status = notificationType.accept,
+                                requestType = requestType.Incident,
+                                createdAt = DateTime.Now
+                            });
+                        }
                         return;
 
                     case RequestStatus.Rejected:
-                        finalNotifType = notificationType.reject;
-                        // Notify the original initiator.
+                        // 1. Notify the original initiator
                         await _notifManager.AddUpdateAsync(new NotificationModel
                         {
                             requestId = request.Id,
-                            UserId = request.UserId ?? actingUserId,
-                            status = finalNotifType,
+                            UserId = creatorId,
+                            status = notificationType.reject,
                             requestType = requestType.Incident,
                             createdAt = DateTime.Now
                         });
+
+                        // 2. Notify the initiator's manager
+                        if (creatorUser != null && creatorUser.ManagerId.HasValue)
+                        {
+                            await _notifManager.AddUpdateAsync(new NotificationModel
+                            {
+                                requestId = request.Id,
+                                UserId = creatorUser.ManagerId.Value,
+                                status = notificationType.reject,
+                                requestType = requestType.Incident,
+                                createdAt = DateTime.Now
+                            });
+                        }
                         return;
 
                     case RequestStatus.underReview:
@@ -364,28 +393,21 @@ namespace QM.Controller
 
                     case RequestStatus.InProgress:
                     default:
-                        finalNotifType = notificationType.updated;
-                        await _notifManager.AddUpdateAsync(new NotificationModel
+                        // Resubmission by initiator → notify initiator's manager.
+                        if (creatorUser != null && creatorUser.ManagerId.HasValue)
                         {
-                            requestId = request.Id,
-                            UserId = request.UserId ?? actingUserId,
-                            status = finalNotifType,
-                            requestType = requestType.Incident,
-                            createdAt = DateTime.Now
-                        });
+                            await _notifManager.AddUpdateAsync(new NotificationModel
+                            {
+                                requestId = request.Id,
+                                UserId = creatorUser.ManagerId.Value,
+                                status = notificationType.created,
+                                requestType = requestType.Incident,
+                                createdAt = DateTime.Now
+                            });
+                        }
                         return;
                 }
             }
-
-            // No explicit status change → just an update notification to the original initiator.
-            await _notifManager.AddUpdateAsync(new NotificationModel
-            {
-                requestId = request.Id,
-                UserId = request.UserId ?? actingUserId,
-                status = notificationType.updated,
-                requestType = requestType.Incident,
-                createdAt = DateTime.Now
-            });
         }
 
         // Helper: emit one notification per admin user.

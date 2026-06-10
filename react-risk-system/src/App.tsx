@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Check, X } from 'lucide-react';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import NewRequestForm from './components/requests/NewRequestForm';
@@ -27,6 +28,13 @@ const DashboardLayout = () => {
   const [role, setRole] = useState<UserRole>(() =>
     normalizeUserRole(localStorage.getItem('userRole'))
   );
+
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000);
+  };
 
   useEffect(() => {
     const raw = localStorage.getItem('userRole');
@@ -181,8 +189,11 @@ const DashboardLayout = () => {
                       });
 
                       const result = await parseJsonSafe(response);
-                      alert(result?.message || 'تم تسجيل الخطر');
-                      if (response.ok) navigate('/requests');
+                      if (response.ok) {
+                        navigate('/requests', { state: { message: result?.message || 'تم تسجيل الخطر', type: 'success' } });
+                      } else {
+                        showNotification(result?.message || 'فشل تسجيل الخطر', 'error');
+                      }
                     }}
                     onCancel={() => navigate('/')}
                   />
@@ -257,8 +268,11 @@ const DashboardLayout = () => {
                       });
 
                       const result = await parseJsonSafe(response);
-                      alert(result?.message || 'تم إرسال المقترح');
-                      if (response.ok) navigate('/requests');
+                      if (response.ok) {
+                        navigate('/requests', { state: { message: result?.message || 'تم إرسال المقترح', type: 'success' } });
+                      } else {
+                        showNotification(result?.message || 'فشل إرسال المقترح', 'error');
+                      }
                     }}
                   />
                 ) : (
@@ -398,6 +412,16 @@ const DashboardLayout = () => {
           </Routes>
         </div>
       </main>
+      {notification && (
+        <div
+          className={`fixed bottom-5 left-5 z-[200] px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 text-white border transition-all transform translate-y-0 ${
+            notification.type === 'success' ? 'bg-green-600 border-green-700' : 'bg-red-600 border-red-700'
+          }`}
+        >
+          {notification.type === 'success' ? <Check size={20} /> : <X size={20} />}
+          <span className="font-bold">{notification.message}</span>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Check, X } from 'lucide-react';
 import { UserRole } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../../api/http';
+import CustomSelect from '../shared/CustomSelect';
 import {
   STATUS_FORWARD_TO_ADMIN,
   STATUS_REJECT,
@@ -94,6 +96,13 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
     category: '',
     status: '',
   });
+
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000);
+  };
 
   const parseJsonSafe = async (response: Response) => {
     const text = await response.text();
@@ -205,16 +214,16 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
       const result = await parseJsonSafe(response);
 
       if (!response.ok) {
-        alert(result?.message || 'فشل الإرسال');
+        showNotification(result?.message || 'فشل الإرسال', 'error');
         return;
       }
 
-      alert(result?.message || 'تم الإرسال إلى الأدمن');
+      showNotification(result?.message || 'تم الإرسال إلى الأدمن', 'success');
       setSelectedProposal(null);
       await fetchProposals();
     } catch (error) {
       console.error(error);
-      alert('حدث خطأ أثناء الإرسال');
+      showNotification('حدث خطأ أثناء الإرسال', 'error');
     }
   };
 
@@ -241,17 +250,17 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
       const result = await parseJsonSafe(response);
 
       if (!response.ok) {
-        alert(result?.message || 'فشل الرفض');
+        showNotification(result?.message || 'فشل الرفض', 'error');
         return;
       }
 
-      alert(result?.message || 'تم رفض المقترح');
+      showNotification(result?.message || 'تم رفض المقترح', 'success');
       setSelectedProposal(null);
       setRejectionReason('');
       await fetchProposals();
     } catch (error) {
       console.error(error);
-      alert('حدث خطأ أثناء الرفض');
+      showNotification('حدث خطأ أثناء الرفض', 'error');
     }
   };
 
@@ -296,27 +305,27 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
           />
 
           {role === 'admin' && (
-            <select
-              className="border rounded px-4 py-3 text-lg"
-              onChange={e => setFilters({ ...filters, category: e.target.value })}
-            >
-              <option value="">كل الفئات</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+            <CustomSelect
+              value={filters.category}
+              onChange={value => setFilters({ ...filters, category: value })}
+              options={[
+                { value: '', label: 'كل الفئات' },
+                ...categories.map(cat => ({ value: cat, label: cat }))
+              ]}
+              placeholder="كل الفئات"
+            />
           )}
 
-          <select
-            className="border rounded px-4 py-3 text-lg"
-            onChange={e => setFilters({ ...filters, status: e.target.value })}
-          >
-            <option value="">كل الحالات</option>
-            <option value="manager_review">بانتظار المدير</option>
-            <option value="admin_review">بانتظار الأدمن</option>
-          </select>
+          <CustomSelect
+            value={filters.status}
+            onChange={value => setFilters({ ...filters, status: value })}
+            options={[
+              { value: '', label: 'كل الحالات' },
+              { value: 'manager_review', label: 'بانتظار المدير' },
+              { value: 'admin_review', label: 'بانتظار الأدمن' }
+            ]}
+            placeholder="كل الحالات"
+          />
         </div>
       </div>
 
@@ -342,7 +351,7 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
                 {role === 'admin' && <td className="px-6 py-4 text-center text-lg">{proposal.categoryName}</td>}
                 <td className="px-6 py-4 text-center">
                   <span
-                    className={`${statusMap[proposal.status]?.color || 'bg-gray-500'} text-white px-6 py-2 rounded-full text-lg font-medium`}
+                    className={`${statusMap[proposal.status]?.color || 'bg-gray-500'} text-white px-6 py-2 rounded-full text-lg font-medium whitespace-nowrap`}
                   >
                     {statusMap[proposal.status]?.label || proposal.status}
                   </span>
@@ -468,6 +477,16 @@ const NewRisksTab: React.FC<NewRisksTabProps> = ({ role }) => {
               )}
             </div>
           </div>
+        </div>
+      )}
+      {notification && (
+        <div
+          className={`fixed bottom-5 left-5 z-[200] px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 text-white border transition-all transform translate-y-0 ${
+            notification.type === 'success' ? 'bg-green-600 border-green-700' : 'bg-red-600 border-red-700'
+          }`}
+        >
+          {notification.type === 'success' ? <Check size={20} /> : <X size={20} />}
+          <span className="font-bold">{notification.message}</span>
         </div>
       )}
     </div>
